@@ -93,103 +93,100 @@ class _AccountsScreenState extends State<AccountsScreen> {
             padding: EdgeInsets.all(16),
             header: Column(
               children: [
-                Container(
-                  margin: EdgeInsets.only(bottom: 12),
-                  padding: EdgeInsets.all(24),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.teal.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.teal.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.account_balance_wallet,
-                          color: Colors.white, size: 40),
-                      SizedBox(width: 16),
-                      Expanded(
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.teal.withOpacity(0.7),
+                              Colors.blue.withOpacity(0.7),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.teal.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Баланс по дебетовым картам и наличке',
+                            Icon(Icons.account_balance_wallet,
+                                color: Colors.white, size: 28),
+                            SizedBox(height: 8),
+                            Text('Дебетовые и наличка',
                                 style: TextStyle(
-                                    color: Colors.white70, fontSize: 13)),
+                                    color: Colors.white70, fontSize: 12)),
                             SizedBox(height: 4),
                             Text(
-                                '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold)),
+                              '${_getDebitTotal().toStringAsFixed(0)} ${widget.currency}',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.only(bottom: 20),
-                  padding: EdgeInsets.all(24),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.red.withOpacity(0.7),
-                        Colors.deepOrange.withOpacity(0.7),
-                      ],
                     ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.credit_card, color: Colors.white, size: 40),
-                      SizedBox(width: 16),
-                      Expanded(
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.red.withOpacity(0.7),
+                              Colors.deepOrange.withOpacity(0.7),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Icon(Icons.credit_card,
+                                color: Colors.white, size: 28),
+                            SizedBox(height: 8),
                             Text('Долг по кредиткам',
                                 style: TextStyle(
-                                    color: Colors.white70, fontSize: 13)),
+                                    color: Colors.white70, fontSize: 12)),
                             SizedBox(height: 4),
                             Text(
-                                '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold)),
+                              '${_getCreditDebt().toStringAsFixed(0)} ${widget.currency}',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
