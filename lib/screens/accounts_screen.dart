@@ -54,80 +54,68 @@ class _AccountsScreenState extends State<AccountsScreen> {
         padding: EdgeInsets.all(16),
         header: Column(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  margin: EdgeInsets.only(bottom: 12),
-                  padding: EdgeInsets.all(20),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.teal.withOpacity(0.35),
-                        Colors.blue.withOpacity(0.35),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Баланс по дебетовым картам и наличке',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                      SizedBox(height: 4),
-                      Text(
-                          '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+            Container(
+              margin: EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.teal.withOpacity(0.35),
+                    Colors.blue.withOpacity(0.35),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.4),
+                  width: 1.5,
                 ),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Баланс по дебетовым картам и наличке',
+                      style: TextStyle(color: Colors.white, fontSize: 14)),
+                  SizedBox(height: 4),
+                  Text(
+                      '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  margin: EdgeInsets.only(bottom: 16),
-                  padding: EdgeInsets.all(20),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.red.withOpacity(0.35),
-                        Colors.deepOrange.withOpacity(0.35),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Долг по кредиткам',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                      SizedBox(height: 4),
-                      Text(
-                          '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+            Container(
+              margin: EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.red.withOpacity(0.35),
+                    Colors.deepOrange.withOpacity(0.35),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Долг по кредиткам',
+                      style: TextStyle(color: Colors.white, fontSize: 14)),
+                  SizedBox(height: 4),
+                  Text(
+                      '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold)),
+                ],
               ),
             ),
             Row(
@@ -175,108 +163,100 @@ class _AccountsScreenState extends State<AccountsScreen> {
       child: InkWell(
         onTap: () => widget.onEditAccount(account),
         onLongPress: () => _showAccountMenu(account),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    _getColorFromHex(account.color).withOpacity(0.35),
-                    _getColorFromHex(account.color).withOpacity(0.5),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  // ИКОНКА СЧЁТА (слева)
-                  account.iconPath != null && account.iconPath!.isNotEmpty
-                      ? Container(
-                          width: 45,
-                          height: 45,
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Image.asset(account.iconPath!,
-                              fit: BoxFit.contain),
-                        )
-                      : Container(
-                          width: 45,
-                          height: 45,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            _getAccountIcon(account.icon),
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          account.name,
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        if (account.bank.isNotEmpty)
-                          Text(account.bank,
-                              style: TextStyle(color: Colors.white70)),
-                        if (account.cardNumber.isNotEmpty)
-                          Text(account.cardNumber,
-                              style: TextStyle(color: Colors.white70)),
-                        SizedBox(height: 16),
-                        Text(
-                          '${account.balance.toStringAsFixed(2)} ${widget.currency}',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        if (account.type == 'credit') ...[
-                          Text(
-                            'Лимит: ${account.creditLimit.toStringAsFixed(0)} ${widget.currency}',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          Text(
-                            'Долг: ${(account.creditLimit - account.balance).toStringAsFixed(2)} ${widget.currency}',
-                            style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (!kIsWeb)
-                    ReorderableDragStartListener(
-                      index: index,
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                _getColorFromHex(account.color).withOpacity(0.35),
+                _getColorFromHex(account.color).withOpacity(0.5),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.4),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              account.iconPath != null && account.iconPath!.isNotEmpty
+                  ? Container(
+                      width: 45,
+                      height: 45,
+                      padding: EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child:
+                          Image.asset(account.iconPath!, fit: BoxFit.contain),
+                    )
+                  : Container(
+                      width: 45,
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Icon(
-                        Icons.drag_handle,
-                        color: Colors.white70,
-                        size: 28,
+                        _getAccountIcon(account.icon),
+                        color: Colors.white,
+                        size: 26,
                       ),
                     ),
-                ],
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      account.name,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    if (account.bank.isNotEmpty)
+                      Text(account.bank,
+                          style: TextStyle(color: Colors.white70)),
+                    if (account.cardNumber.isNotEmpty)
+                      Text(account.cardNumber,
+                          style: TextStyle(color: Colors.white70)),
+                    SizedBox(height: 16),
+                    Text(
+                      '${account.balance.toStringAsFixed(2)} ${widget.currency}',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    if (account.type == 'credit') ...[
+                      Text(
+                        'Лимит: ${account.creditLimit.toStringAsFixed(0)} ${widget.currency}',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      Text(
+                        'Долг: ${(account.creditLimit - account.balance).toStringAsFixed(2)} ${widget.currency}',
+                        style: TextStyle(
+                            color: Colors.white70, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+              if (!kIsWeb)
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Icon(
+                    Icons.drag_handle,
+                    color: Colors.white70,
+                    size: 28,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
