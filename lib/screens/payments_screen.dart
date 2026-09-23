@@ -62,14 +62,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     return 'Неизвестно';
   }
 
-  String _getPaymentDescription(Payment payment) {
-    if (payment.isIncome) {
-      return '💰 Доход • ${_getAccountName(payment.toAccountId)}';
-    } else {
-      return '💳 ${_getAccountName(payment.fromAccountId)} → ${_getAccountName(payment.toAccountId)}';
-    }
-  }
-
   bool _isOverdue(DateTime date) {
     return date.isBefore(DateTime.now()) &&
         !date.isAtSameMomentAs(DateTime.now());

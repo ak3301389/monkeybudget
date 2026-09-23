@@ -6,13 +6,13 @@ import '../models.dart';
 import '../services/storage_service.dart';
 import '../services/backup_service.dart';
 import '../services/scanner_service.dart';
-import '../services/notification_service.dart';
+import '../services/update_service.dart';
+import '../widgets/update_dialog.dart';
 import 'transactions_screen.dart';
 import 'accounts_screen.dart';
 import 'categories_screen.dart';
 import 'payments_screen.dart';
 import 'settings_screen.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'stats_screen.dart';
 import '../payment_schedule.dart';
 import 'scanner_screen.dart';
@@ -204,6 +204,29 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadData();
     _autoSync();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdates();
+    });
+  }
+
+  Future<void> _checkUpdates() async {
+    try {
+      final update = await UpdateService.checkForUpdate();
+      if (update != null && mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => UpdateDialog(
+            version: update['version'],
+            buildNumber: update['build'],
+            url: update['url'],
+            apkUrl: update['apkUrl'],
+            notes: update['notes'],
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Ошибка проверки обновлений: $e');
+    }
   }
 
   Future<void> _autoSync() async {
@@ -1588,13 +1611,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final nameController = TextEditingController(text: account.name);
     final balanceController =
         TextEditingController(text: account.balance.toString());
-    final bankController = TextEditingController(text: account.bank ?? '');
+    final bankController = TextEditingController(text: account.bank);
     final creditLimitController =
         TextEditingController(text: account.creditLimit.toString());
 
     String accountType = account.type;
-    String selectedColor = account.color ?? '#4CAF50';
-    String selectedIcon = account.icon ?? 'wallet';
+    String selectedColor = account.color;
+    String selectedIcon = account.icon;
     String? selectedIconPath = account.iconPath;
 
     showDialog(
@@ -2252,15 +2275,12 @@ class _HomeScreenState extends State<HomeScreen> {
         nextDate = currentDate.add(Duration(days: payment.interval));
     }
 
-    if (nextDate != null) {
-      return PaymentSchedule.fromPattern(
-        startDate: nextDate,
-        frequency: payment.frequency,
-        interval: payment.interval,
-        count: 12,
-      );
-    }
-    return payment.schedule.advance();
+    return PaymentSchedule.fromPattern(
+      startDate: nextDate,
+      frequency: payment.frequency,
+      interval: payment.interval,
+      count: 12,
+    );
   }
 
   // ⭐ СОХРАНЕНИЕ В FIREBASE

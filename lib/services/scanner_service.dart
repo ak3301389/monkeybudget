@@ -1,5 +1,4 @@
 ﻿import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 class ScannerService {
@@ -7,7 +6,7 @@ class ScannerService {
   Future<Map<String, dynamic>?> parseReceipt(String qrData) async {
     debugPrint('=== QR DATA ===');
     debugPrint(qrData);
-    
+
     // Пробуем распарсить как JSON
     try {
       final data = jsonDecode(qrData);
@@ -16,7 +15,7 @@ class ScannerService {
     } catch (e) {
       debugPrint('Not JSON: $e');
     }
-    
+
     // Пробуем извлечь данные из строки
     final amount = _extractAmount(qrData);
     if (amount > 0) {
@@ -27,10 +26,10 @@ class ScannerService {
         'items': [],
       };
     }
-    
+
     return null;
   }
-  
+
   double _extractAmount(String data) {
     // Ищем "sum" или "сумма"
     final sumPatterns = [
@@ -39,22 +38,23 @@ class ScannerService {
       RegExp(r'СУММ?[АA]:\s*(\d+\.?\d*)'),
       RegExp(r'total[":\s]+(\d+\.?\d*)'),
     ];
-    
+
     for (var pattern in sumPatterns) {
       final match = pattern.firstMatch(data);
       if (match != null) {
         return double.tryParse(match.group(1) ?? '0') ?? 0;
       }
     }
-    
+
     return 0;
   }
-  
+
   Map<String, dynamic>? _extractFromJson(Map<String, dynamic> data) {
     try {
-      final amount = double.tryParse(data['totalSum'].toString()) ?? 
-                     double.tryParse(data['sum'].toString()) ?? 0;
-      
+      final amount = double.tryParse(data['totalSum'].toString()) ??
+          double.tryParse(data['sum'].toString()) ??
+          0;
+
       return {
         'amount': amount,
         'category': 'Другое',
