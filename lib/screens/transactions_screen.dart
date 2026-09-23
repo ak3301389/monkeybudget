@@ -359,6 +359,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Widget _buildTransactionCard(Transaction transaction) {
+    // ignore: unused_local_variable
     final account = widget.accounts.firstWhere(
       (a) => a.id == transaction.accountId,
       orElse: () =>
@@ -366,8 +367,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
 
     Color color;
+    // ignore: unused_local_variable
     IconData icon;
     String sign;
+    // ignore: unused_local_variable
     String typeText;
 
     if (transaction.isTransfer) {

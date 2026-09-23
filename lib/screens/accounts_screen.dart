@@ -50,14 +50,24 @@ class _AccountsScreenState extends State<AccountsScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Общий баланс',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
+                Text('Баланс по дебетовым картам и наличке',
+                    style: TextStyle(color: Colors.white, fontSize: 14)),
                 Text(
-                    '${_getTotalBalance().toStringAsFixed(2)} ${widget.currency}',
+                    '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
                     style: TextStyle(
                         color: Colors.white,
-                        fontSize: 32,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold)),
+                SizedBox(height: 12),
+                Text('Долг по кредиткам',
+                    style: TextStyle(color: Colors.white, fontSize: 14)),
+                Text(
+                    '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold)),
               ],
             ),
@@ -444,11 +454,23 @@ class _AccountsScreenState extends State<AccountsScreen> {
     return Color(int.parse('FF$hexColor', radix: 16));
   }
 
-  double _getTotalBalance() {
+  double _getDebitTotal() {
     double total = 0;
     for (var account in widget.accounts) {
-      total += account.balance;
+      if (account.type != 'credit') {
+        total += account.balance;
+      }
     }
     return total;
+  }
+
+  double _getCreditDebt() {
+    double debt = 0;
+    for (var account in widget.accounts) {
+      if (account.type == 'credit') {
+        debt += account.creditLimit - account.balance;
+      }
+    }
+    return debt;
   }
 }

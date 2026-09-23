@@ -41,7 +41,7 @@ class Account {
     int? order,
   }) {
     return Account(
-      id: this.id,
+      id: id,
       name: name ?? this.name,
       type: type ?? this.type,
       balance: balance ?? this.balance,
@@ -99,6 +99,7 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
         json['name'] ?? '',
+        // ignore: non_const_argument_for_const_parameter
         IconData(int.tryParse(json['icon']?.toString() ?? '0') ?? 0,
             fontFamily: 'MaterialIcons'),
         json['color'] ?? '#607D8B',
@@ -121,6 +122,7 @@ class SubCategory {
   factory SubCategory.fromJson(Map<String, dynamic> json) => SubCategory(
         json['name'] ?? '',
         json['parentName'] ?? '',
+        // ignore: non_const_argument_for_const_parameter
         IconData(int.tryParse(json['icon']?.toString() ?? '0') ?? 0,
             fontFamily: 'MaterialIcons'),
       );
@@ -168,7 +170,7 @@ class Transaction {
     DateTime? plannedDate,
   }) {
     return Transaction(
-      id: this.id,
+      id: id,
       amount: amount ?? this.amount,
       category: category ?? this.category,
       subCategory: subCategory ?? this.subCategory,
@@ -270,7 +272,7 @@ class RecurringPayment {
     bool? isActive,
   }) {
     return RecurringPayment(
-      id: this.id,
+      id: id,
       name: name ?? this.name,
       amount: amount ?? this.amount,
       category: category ?? this.category,
