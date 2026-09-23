@@ -44,113 +44,155 @@ class _AccountsScreenState extends State<AccountsScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.teal.shade50,
-            Colors.blue.shade50,
-            Colors.purple.shade50,
+            Colors.teal.shade100,
+            Colors.blue.shade100,
+            Colors.purple.shade100,
           ],
         ),
       ),
-      child: ReorderableListView(
-        padding: EdgeInsets.all(16),
-        header: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.only(bottom: 12),
-              padding: EdgeInsets.all(20),
-              width: double.infinity,
+      child: Stack(
+        children: [
+          // Декоративные размытые круги на фоне
+          Positioned(
+            top: -80,
+            left: -80,
+            child: Container(
+              width: 220,
+              height: 220,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.teal.withOpacity(0.35),
-                    Colors.blue.withOpacity(0.35),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Баланс по дебетовым картам и наличке',
-                      style: TextStyle(color: Colors.white, fontSize: 14)),
-                  SizedBox(height: 4),
-                  Text(
-                      '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold)),
-                ],
+                shape: BoxShape.circle,
+                color: Colors.teal.withOpacity(0.5),
               ),
             ),
-            Container(
-              margin: EdgeInsets.only(bottom: 16),
-              padding: EdgeInsets.all(20),
-              width: double.infinity,
+          ),
+          Positioned(
+            top: 200,
+            right: -100,
+            child: Container(
+              width: 260,
+              height: 260,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.red.withOpacity(0.35),
-                    Colors.deepOrange.withOpacity(0.35),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Долг по кредиткам',
-                      style: TextStyle(color: Colors.white, fontSize: 14)),
-                  SizedBox(height: 4),
-                  Text(
-                      '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold)),
-                ],
+                shape: BoxShape.circle,
+                color: Colors.purple.withOpacity(0.4),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ),
+          Positioned(
+            bottom: -100,
+            left: -60,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blue.withOpacity(0.5),
+              ),
+            ),
+          ),
+          ReorderableListView(
+            padding: EdgeInsets.all(16),
+            header: Column(
               children: [
-                Text('Мои счета',
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                IconButton(
-                  icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
-                  onPressed: _showAddDialog,
+                Container(
+                  margin: EdgeInsets.only(bottom: 12),
+                  padding: EdgeInsets.all(20),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.teal.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Баланс по дебетовым картам и наличке',
+                          style: TextStyle(color: Colors.white, fontSize: 14)),
+                      SizedBox(height: 4),
+                      Text(
+                          '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
+                Container(
+                  margin: EdgeInsets.only(bottom: 16),
+                  padding: EdgeInsets.all(20),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.red.withOpacity(0.7),
+                        Colors.deepOrange.withOpacity(0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Долг по кредиткам',
+                          style: TextStyle(color: Colors.white, fontSize: 14)),
+                      SizedBox(height: 4),
+                      Text(
+                          '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Мои счета',
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon:
+                          Icon(Icons.add_circle, color: Colors.teal, size: 30),
+                      onPressed: _showAddDialog,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
               ],
             ),
-            SizedBox(height: 8),
-          ],
-        ),
-        onReorder: (oldIndex, newIndex) {
-          if (newIndex > oldIndex) {
-            newIndex -= 1;
-          }
+            onReorder: (oldIndex, newIndex) {
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
 
-          final reordered = List<Account>.from(sortedAccounts);
-          final moved = reordered.removeAt(oldIndex);
-          reordered.insert(newIndex, moved);
+              final reordered = List<Account>.from(sortedAccounts);
+              final moved = reordered.removeAt(oldIndex);
+              reordered.insert(newIndex, moved);
 
-          for (int i = 0; i < reordered.length; i++) {
-            reordered[i] = reordered[i].copyWith(order: i);
-          }
+              for (int i = 0; i < reordered.length; i++) {
+                reordered[i] = reordered[i].copyWith(order: i);
+              }
 
-          widget.onReorderAccounts(reordered);
-        },
-        children: [
-          for (int i = 0; i < sortedAccounts.length; i++)
-            _buildAccountCard(sortedAccounts[i], i),
+              widget.onReorderAccounts(reordered);
+            },
+            children: [
+              for (int i = 0; i < sortedAccounts.length; i++)
+                _buildAccountCard(sortedAccounts[i], i),
+            ],
+          ),
         ],
       ),
     );
@@ -168,8 +210,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                _getColorFromHex(account.color).withOpacity(0.35),
-                _getColorFromHex(account.color).withOpacity(0.5),
+                _getColorFromHex(account.color).withOpacity(0.7),
+                _getColorFromHex(account.color).withOpacity(0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
