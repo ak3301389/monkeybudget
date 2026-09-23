@@ -58,6 +58,14 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Красный', 'hex': '#F44336'},
     {'name': 'Розовый', 'hex': '#E91E63'},
     {'name': 'Коричневый', 'hex': '#795548'},
+    {'name': 'Индиго', 'hex': '#3F51B5'},
+    {'name': 'Голубой', 'hex': '#03A9F4'},
+    {'name': 'Лаймовый', 'hex': '#CDDC39'},
+    {'name': 'Янтарный', 'hex': '#FFC107'},
+    {'name': 'Глубокий оранжевый', 'hex': '#FF5722'},
+    {'name': 'Тёмно-фиолетовый', 'hex': '#673AB7'},
+    {'name': 'Серо-голубой', 'hex': '#607D8B'},
+    {'name': 'Изумрудный', 'hex': '#009688'},
   ];
 
   final List<Map<String, dynamic>> accountIcons = [
