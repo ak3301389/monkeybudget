@@ -95,7 +95,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               children: [
                 Container(
                   margin: EdgeInsets.only(bottom: 12),
-                  padding: EdgeInsets.all(20),
+                  padding: EdgeInsets.all(24),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -104,30 +104,47 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         Colors.blue.withOpacity(0.7),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.4),
                       width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.teal.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text('Баланс по дебетовым картам и наличке',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                      SizedBox(height: 4),
-                      Text(
-                          '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold)),
+                      Icon(Icons.account_balance_wallet,
+                          color: Colors.white, size: 40),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Баланс по дебетовым картам и наличке',
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 13)),
+                            SizedBox(height: 4),
+                            Text(
+                                '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.only(bottom: 16),
-                  padding: EdgeInsets.all(20),
+                  margin: EdgeInsets.only(bottom: 20),
+                  padding: EdgeInsets.all(24),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -136,24 +153,40 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         Colors.deepOrange.withOpacity(0.7),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.4),
                       width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text('Долг по кредиткам',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                      SizedBox(height: 4),
-                      Text(
-                          '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold)),
+                      Icon(Icons.credit_card, color: Colors.white, size: 40),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Долг по кредиткам',
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 13)),
+                            SizedBox(height: 4),
+                            Text(
+                                '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -206,12 +239,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
         onTap: () => widget.onEditAccount(account),
         onLongPress: () => _showAccountMenu(account),
         child: Container(
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 _getColorFromHex(account.color).withOpacity(0.7),
-                _getColorFromHex(account.color).withOpacity(0.85),
+                _getColorFromHex(account.color).withOpacity(0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
