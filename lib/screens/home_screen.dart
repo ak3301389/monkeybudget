@@ -469,82 +469,139 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: currentView == 0
-          ? TransactionsScreen(
-              transactions: transactions,
-              accounts: accounts,
-              expenseCategories: expenseCategories,
-              incomeCategories: incomeCategories,
-              expenseSubCategories: expenseSubCategories,
-              incomeSubCategories: incomeSubCategories,
-              currency: currency,
-              storageService: widget.storageService,
-              onAddTransaction: _addTransaction,
-              onUpdateTransaction: _updateTransaction,
-              onDeleteTransaction: _deleteTransaction,
-              onAddIncomeCategory: _addIncomeCategory,
-              onAddExpenseCategory: _addExpenseCategory,
-            )
-          : currentView == 1
-              ? AccountsScreen(
-                  accounts: accounts,
-                  currency: currency,
-                  onAddAccount: _addAccount,
-                  onDeleteAccount: _deleteAccount,
-                  onUpdateAccount: _updateAccount,
-                  onEditAccount: _showEditAccountDialog,
-                  onReorderAccounts: _reorderAccounts,
-                  accountColors: accountColors,
-                  accountIcons: accountIcons,
-                )
-              : currentView == 2
-                  ? PaymentsScreen(
-                      payments: payments,
-                      accounts: accounts,
-                      expenseCategories: expenseCategories,
-                      incomeCategories: incomeCategories,
-                      incomeSubCategories: incomeSubCategories,
-                      expenseSubCategories: expenseSubCategories,
-                      currency: currency,
-                      onAdd: _addPayment,
-                      onUpdate: _updatePayment,
-                      onDelete: _deletePayment,
-                      onPayNow: _onPayNow,
-                    )
-                  : currentView == 3
-                      ? CategoriesScreen(
-                          expenseCategories: expenseCategories,
-                          incomeCategories: incomeCategories,
-                          transferCategories: transferCategories,
-                          transferSubCategories: transferSubCategories,
-                          expenseSubCategories: expenseSubCategories,
-                          incomeSubCategories: incomeSubCategories,
-                          onAddExpenseCategory: _addExpenseCategory,
-                          onAddIncomeCategory: _addIncomeCategory,
-                          onDeleteExpenseCategory: _deleteExpenseCategory,
-                          onDeleteIncomeCategory: _deleteIncomeCategory,
-                          onAddTransferCategory: _addTransferCategory,
-                          onDeleteTransferCategory: _deleteTransferCategory,
-                          onAddTransferSubCategory: _addTransferSubCategory,
-                          onDeleteTransferSubCategory:
-                              _deleteTransferSubCategory,
-                          onAddExpenseSubCategory: _addExpenseSubCategory,
-                          onAddIncomeSubCategory: _addIncomeSubCategory,
-                          onDeleteExpenseSubCategory: _deleteExpenseSubCategory,
-                          onDeleteIncomeSubCategory: _deleteIncomeSubCategory,
-                          categoryIcons: categoryIcons,
-                        )
-                      : SettingsScreen(
-                          storageService: widget.storageService,
-                          backupService: widget.backupService,
-                          currency: currency,
-                          showNotifications: showNotifications,
-                          isDarkMode: isDarkMode,
-                          onCurrencyChanged: _changeCurrency,
-                          onNotificationsChanged: _changeNotifications,
-                          onDarkModeChanged: _changeDarkMode,
-                          onClearAll: _clearAll,
-                        ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.teal.shade100,
+              Colors.blue.shade100,
+              Colors.purple.shade100,
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -80,
+              left: -80,
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.teal.withOpacity(0.5),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 200,
+              right: -100,
+              child: Container(
+                width: 260,
+                height: 260,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.purple.withOpacity(0.4),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -100,
+              left: -60,
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue.withOpacity(0.5),
+                ),
+              ),
+            ),
+            currentView == 0
+                ? TransactionsScreen(
+                    transactions: transactions,
+                    accounts: accounts,
+                    expenseCategories: expenseCategories,
+                    incomeCategories: incomeCategories,
+                    expenseSubCategories: expenseSubCategories,
+                    incomeSubCategories: incomeSubCategories,
+                    currency: currency,
+                    storageService: widget.storageService,
+                    onAddTransaction: _addTransaction,
+                    onUpdateTransaction: _updateTransaction,
+                    onDeleteTransaction: _deleteTransaction,
+                    onAddIncomeCategory: _addIncomeCategory,
+                    onAddExpenseCategory: _addExpenseCategory,
+                  )
+                : currentView == 1
+                    ? AccountsScreen(
+                        accounts: accounts,
+                        currency: currency,
+                        onAddAccount: _addAccount,
+                        onDeleteAccount: _deleteAccount,
+                        onUpdateAccount: _updateAccount,
+                        onEditAccount: _showEditAccountDialog,
+                        onReorderAccounts: _reorderAccounts,
+                        accountColors: accountColors,
+                        accountIcons: accountIcons,
+                      )
+                    : currentView == 2
+                        ? PaymentsScreen(
+                            payments: payments,
+                            accounts: accounts,
+                            expenseCategories: expenseCategories,
+                            incomeCategories: incomeCategories,
+                            incomeSubCategories: incomeSubCategories,
+                            expenseSubCategories: expenseSubCategories,
+                            currency: currency,
+                            onAdd: _addPayment,
+                            onUpdate: _updatePayment,
+                            onDelete: _deletePayment,
+                            onPayNow: _onPayNow,
+                          )
+                        : currentView == 3
+                            ? CategoriesScreen(
+                                expenseCategories: expenseCategories,
+                                incomeCategories: incomeCategories,
+                                transferCategories: transferCategories,
+                                transferSubCategories: transferSubCategories,
+                                expenseSubCategories: expenseSubCategories,
+                                incomeSubCategories: incomeSubCategories,
+                                onAddExpenseCategory: _addExpenseCategory,
+                                onAddIncomeCategory: _addIncomeCategory,
+                                onDeleteExpenseCategory: _deleteExpenseCategory,
+                                onDeleteIncomeCategory: _deleteIncomeCategory,
+                                onAddTransferCategory: _addTransferCategory,
+                                onDeleteTransferCategory:
+                                    _deleteTransferCategory,
+                                onAddTransferSubCategory:
+                                    _addTransferSubCategory,
+                                onDeleteTransferSubCategory:
+                                    _deleteTransferSubCategory,
+                                onAddExpenseSubCategory: _addExpenseSubCategory,
+                                onAddIncomeSubCategory: _addIncomeSubCategory,
+                                onDeleteExpenseSubCategory:
+                                    _deleteExpenseSubCategory,
+                                onDeleteIncomeSubCategory:
+                                    _deleteIncomeSubCategory,
+                                categoryIcons: categoryIcons,
+                              )
+                            : SettingsScreen(
+                                storageService: widget.storageService,
+                                backupService: widget.backupService,
+                                currency: currency,
+                                showNotifications: showNotifications,
+                                isDarkMode: isDarkMode,
+                                onCurrencyChanged: _changeCurrency,
+                                onNotificationsChanged: _changeNotifications,
+                                onDarkModeChanged: _changeDarkMode,
+                                onClearAll: _clearAll,
+                              ),
+          ],
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentView < 5 ? currentView : 0,
         onDestinationSelected: (index) {
