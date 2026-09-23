@@ -85,6 +85,22 @@ if errorlevel 1 (
 )
 
 echo.
+echo === GIT PUSH ===
+git add .
+git commit -m "v%major%.%minor%.%patch%+%build_num% - %comment%"
+git push
+
+echo.
+echo === GITHUB RELEASE ===
+gh release create v%major%.%minor%.%patch%+%build_num% "release\%apk_name%" --title "v%major%.%minor%.%patch%" --notes "%comment%"
+
+if errorlevel 1 (
+  echo RELEASE ERROR!
+) else (
+  echo Release created on GitHub!
+)
+
+echo.
 echo === ALL DONE ===
 echo APK: release\%apk_name%
 echo Web: https://monkeybudget.web.app
