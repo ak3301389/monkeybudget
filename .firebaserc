@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "myhomebuh-cc76a"
+  },
+  "targets": {
+    "myhomebuh-cc76a": {
+      "hosting": {
+        "monkeybudget": [
+          "monkeybudget"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- ============ ДОБАВЛЯЕМ ЭТОТ МЕТА-ТЕГ ДЛЯ GOOGLE SIGN-IN ============ -->
+  <meta name="google-signin-client_id" content="259871148413-u89nq55a3onlurh6jmmbbjahkrof6ntr.apps.googleusercontent.com">
+  <!-- ============ КОНЕЦ ВСТАВКИ ============ -->
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="home_budget">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>home_budget</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!-- ============ FIREBASE INITIALIZATION ============ -->
+  <script type="module">
+    // Импортируем Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // Ваша конфигурация Firebase из Firebase Console
+    const firebaseConfig = {
+      apiKey: "AIzaSyDC42qrULzPurQADfzGt0C6FBdkEx7M574",
+      authDomain: "myhomebuh-cc76a.firebaseapp.com",
+      databaseURL: "https://myhomebuh-cc76a-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "myhomebuh-cc76a",
+      storageBucket: "myhomebuh-cc76a.firebasestorage.app",
+      messagingSenderId: "259871148413",
+      appId: "1:259871148413:web:4353c3569dc210427de414"
+    };
+
+    // Инициализируем Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Делаем их доступными для Flutter-плагинов
+    window.firebase = { app, db, auth };
+    
+    console.log('✅ Firebase initialized for web');
+    console.log('📁 Project ID:', firebaseConfig.projectId);
+  </script>
+  <!-- ============ КОНЕЦ ВСТАВКИ FIREBASE ============ -->
+
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
