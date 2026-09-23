@@ -3,7 +3,7 @@ description: Домашняя бухгалтерия
 
 publish_to: 'none'
 
-version: 4.8.0+124
+version: 4.8.0+125
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -45,4 +45,9 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
+  web:
+    generate: true
+    image_path: "assets/icon.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
   image_path: "assets/icon.png"
