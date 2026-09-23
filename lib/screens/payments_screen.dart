@@ -175,10 +175,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                 color: payment.isIncome ? Colors.green : Colors.red,
               ),
             ),
-            Text(
-              _getPaymentDescription(payment),
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
             if (nextDate != null)
               Row(
                 children: [
@@ -296,35 +292,106 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   }
 
   Widget _buildPaymentIcon(Payment payment) {
-    // Если есть банковская иконка — показываем картинку
-    if (payment.iconPath != null && payment.iconPath!.isNotEmpty) {
-      return Container(
-        width: 45,
-        height: 45,
-        padding: EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
+    // Логика:
+    // - Доход: 1 иконка (счёт зачисления)
+    // - Расход (услуга): 1 иконка (счёт списания)
+    // - Перевод: 2 иконки (откуда → куда)
+
+    final isTransfer = payment.fromAccountId != payment.toAccountId;
+
+    // === ПЕРЕВОД: две иконки ===
+    if (isTransfer) {
+      return SizedBox(
+        width: 90,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSmallAccountIcon(payment.fromAccountId, size: 36),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(
+                Icons.arrow_forward,
+                size: 14,
+                color: Colors.blue.shade400,
+              ),
+            ),
+            _buildSmallAccountIcon(payment.toAccountId, size: 36),
+          ],
         ),
-        child: Image.asset(payment.iconPath!, fit: BoxFit.contain),
       );
     }
 
-    // Иначе — Material Icon по типу платежа
-    final isOverdue = payment.schedule.nextDate != null &&
-        payment.schedule.nextDate!.isBefore(DateTime.now());
+    // === ДОХОД: иконка счёта зачисления ===
+    if (payment.isIncome) {
+      return _buildSmallAccountIcon(payment.toAccountId, size: 45);
+    }
 
-    return CircleAvatar(
-      backgroundColor: payment.isIncome
-          ? Colors.green.shade100
-          : (isOverdue ? Colors.red.shade100 : Colors.orange.shade100),
+    // === РАСХОД: иконка счёта списания ===
+    return _buildSmallAccountIcon(payment.fromAccountId, size: 45);
+  }
+
+  Widget _buildSmallAccountIcon(String accountId, {double size = 40}) {
+    final account = widget.accounts.firstWhere(
+      (a) => a.id == accountId,
+      orElse: () => Account(id: '', name: '?', type: 'cash', balance: 0),
+    );
+
+    if (account.iconPath != null && account.iconPath!.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        padding: EdgeInsets.all(size * 0.13),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(size * 0.2),
+        ),
+        child: Image.asset(account.iconPath!, fit: BoxFit.contain),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(size * 0.2),
+      ),
       child: Icon(
-        payment.isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-        color: payment.isIncome
-            ? Colors.green
-            : (isOverdue ? Colors.red : Colors.orange),
+        _getAccountIcon(account.icon),
+        color: Colors.grey.shade700,
+        size: size * 0.6,
       ),
     );
+  }
+
+  IconData _getAccountIcon(String iconName) {
+    switch (iconName) {
+      case 'cash':
+        return Icons.money;
+      case 'card':
+        return Icons.credit_card;
+      case 'bank':
+        return Icons.account_balance;
+      case 'piggy':
+        return Icons.savings;
+      case 'phone':
+        return Icons.phone_android;
+      case 'home':
+        return Icons.home;
+      case 'car':
+        return Icons.directions_car;
+      case 'food':
+        return Icons.restaurant;
+      case 'shopping':
+        return Icons.shopping_cart;
+      case 'travel':
+        return Icons.flight;
+      case 'health':
+        return Icons.local_hospital;
+      case 'wallet':
+      default:
+        return Icons.account_balance_wallet;
+    }
   }
 
   void _showPayConfirmation(Payment payment) {
@@ -387,8 +454,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     bool isIncome = false;
     String? selectedCategory;
     String? selectedSubCategory;
-    String? selectedIconPath;
-    String? selectedColor;
 
     String frequency = 'monthly';
     int interval = 1;
@@ -544,85 +609,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   ),
                   SizedBox(height: 12),
                 ],
-                // Цвет
-                Text('Цвет:', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    '#F44336',
-                    '#E91E63',
-                    '#9C27B0',
-                    '#673AB7',
-                    '#3F51B5',
-                    '#2196F3',
-                    '#00BCD4',
-                    '#009688',
-                    '#4CAF50',
-                    '#8BC34A',
-                    '#FF9800',
-                    '#FF5722',
-                    '#795548',
-                    '#607D8B',
-                    '#000000',
-                    '#9E9E9E',
-                  ].map((hex) {
-                    final isSelected = selectedColor == hex;
-                    return InkWell(
-                      onTap: () => setState(() => selectedColor = hex),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Color(int.parse('FF${hex.replaceAll('#', '')}',
-                              radix: 16)),
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(color: Colors.black, width: 3)
-                              : null,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 16),
-                // Банковские иконки
-                Text('Иконка:', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('Банки:',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: bankIcons.map((bank) {
-                    final path = bank['path']!;
-                    final isSelected = selectedIconPath == path;
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedIconPath = path;
-                        });
-                      },
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.teal.shade100
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(10),
-                          border: isSelected
-                              ? Border.all(color: Colors.teal, width: 2)
-                              : null,
-                        ),
-                        child: Image.asset(path, fit: BoxFit.contain),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 12),
                 DropdownButtonFormField(
                   value: frequency,
                   decoration: InputDecoration(labelText: 'Периодичность'),
@@ -704,8 +690,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   isPaid: false,
                   frequency: frequency,
                   interval: interval,
-                  iconPath: selectedIconPath,
-                  color: selectedColor,
+                  iconPath: null,
+                  color: null,
                 ));
 
                 Navigator.pop(context);
@@ -732,8 +718,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     bool isIncome = payment.isIncome;
     String? selectedCategory = payment.category;
     String? selectedSubCategory = payment.subCategory;
-    String? selectedIconPath = payment.iconPath;
-    String? selectedColor = payment.color;
     String frequency = payment.frequency;
     DateTime startDate = payment.schedule.dates.first;
 
@@ -888,85 +872,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   ),
                   SizedBox(height: 12),
                 ],
-                // Цвет
-                Text('Цвет:', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    '#F44336',
-                    '#E91E63',
-                    '#9C27B0',
-                    '#673AB7',
-                    '#3F51B5',
-                    '#2196F3',
-                    '#00BCD4',
-                    '#009688',
-                    '#4CAF50',
-                    '#8BC34A',
-                    '#FF9800',
-                    '#FF5722',
-                    '#795548',
-                    '#607D8B',
-                    '#000000',
-                    '#9E9E9E',
-                  ].map((hex) {
-                    final isSelected = selectedColor == hex;
-                    return InkWell(
-                      onTap: () => setState(() => selectedColor = hex),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Color(int.parse('FF${hex.replaceAll('#', '')}',
-                              radix: 16)),
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(color: Colors.black, width: 3)
-                              : null,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 16),
-// Банковские иконки
-                Text('Иконка:', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('Банки:',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: bankIcons.map((bank) {
-                    final path = bank['path']!;
-                    final isSelected = selectedIconPath == path;
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedIconPath = path;
-                        });
-                      },
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.teal.shade100
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(10),
-                          border: isSelected
-                              ? Border.all(color: Colors.teal, width: 2)
-                              : null,
-                        ),
-                        child: Image.asset(path, fit: BoxFit.contain),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 12),
                 DropdownButtonFormField(
                   value: frequency,
                   decoration: InputDecoration(labelText: 'Периодичность'),
@@ -1048,8 +953,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     schedule: newSchedule,
                     frequency: frequency,
                     interval: 1,
-                    iconPath: selectedIconPath, // ← ДОБАВИЛИ
-                    color: selectedColor, // ← ДОБАВИЛИ
+                    iconPath: null,
+                    color: null,
                   ),
                 );
 

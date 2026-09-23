@@ -427,7 +427,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${account.name} • $typeText'),
               if (transaction.subCategory != null)
                 Text(
                   transaction.subCategory!,

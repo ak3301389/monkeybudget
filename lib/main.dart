@@ -7,6 +7,8 @@ import 'services/storage_service.dart';
 import 'services/backup_service.dart';
 import 'services/notification_service.dart';
 import 'splash_screen.dart';
+import 'services/update_service.dart';
+import 'widgets/update_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +56,30 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _isDarkMode = widget.storageService.getIsDarkMode();
+
+    // Проверка обновлений при запуске (только для мобильных)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdates();
+    });
+  }
+
+  Future<void> _checkUpdates() async {
+    try {
+      final update = await UpdateService.checkForUpdate();
+      if (update != null && mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => UpdateDialog(
+            version: update['version'],
+            buildNumber: update['build'],
+            url: update['url'],
+            notes: update['notes'],
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Ошибка проверки обновлений: $e');
+    }
   }
 
   void _updateTheme() {
@@ -90,10 +116,10 @@ class _MyAppState extends State<MyApp> {
       home: SplashScreen(),
       routes: {
         '/home': (context) => HomeScreen(
-          storageService: widget.storageService,
-          backupService: widget.backupService,
-          onThemeChanged: _updateTheme,
-        ),
+              storageService: widget.storageService,
+              backupService: widget.backupService,
+              onThemeChanged: _updateTheme,
+            ),
       },
     );
   }
