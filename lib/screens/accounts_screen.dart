@@ -42,8 +42,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
       header: Column(
         children: [
           Container(
-            margin: EdgeInsets.only(bottom: 16),
+            margin: EdgeInsets.only(bottom: 12),
             padding: EdgeInsets.all(20),
+            width: double.infinity,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                   colors: [Colors.teal.shade400, Colors.blue.shade400]),
@@ -54,15 +55,31 @@ class _AccountsScreenState extends State<AccountsScreen> {
               children: [
                 Text('Баланс по дебетовым картам и наличке',
                     style: TextStyle(color: Colors.white, fontSize: 14)),
+                SizedBox(height: 4),
                 Text(
                     '${_getDebitTotal().toStringAsFixed(2)} ${widget.currency}',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
                         fontWeight: FontWeight.bold)),
-                SizedBox(height: 12),
+              ],
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.only(bottom: 16),
+            padding: EdgeInsets.all(20),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  colors: [Colors.red.shade400, Colors.deepOrange.shade400]),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text('Долг по кредиткам',
                     style: TextStyle(color: Colors.white, fontSize: 14)),
+                SizedBox(height: 4),
                 Text(
                     '${_getCreditDebt().toStringAsFixed(2)} ${widget.currency}',
                     style: TextStyle(
