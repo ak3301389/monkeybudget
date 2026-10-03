@@ -1877,6 +1877,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: selectedColor,
                       icon: selectedIcon,
                       iconPath: selectedIconPath,
+                      order: account.order,
                     );
 
                     _updateAccount(account, updatedAccount);
