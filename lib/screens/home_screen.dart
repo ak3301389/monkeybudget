@@ -323,7 +323,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadData() {
     setState(() {
       accounts = widget.storageService.loadAccounts();
+      accounts.sort((a, b) => a.order.compareTo(b.order));
       transactions = widget.storageService.loadTransactions();
+      transactions.sort((a, b) => b.date.compareTo(a.date));
       expenseCategories = widget.storageService.loadExpenseCategories();
       incomeCategories = widget.storageService.loadIncomeCategories();
       expenseSubCategories = widget.storageService.loadExpenseSubCategories();
@@ -1893,7 +1895,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Транзакции
   void _addTransaction(Transaction t) {
     setState(() {
-      transactions.insert(0, t);
+      transactions.add(t);
+      transactions.sort((a, b) => b.date.compareTo(a.date));
 
       if (t.isTransfer) {
         _updateAccountBalance(t.accountId, -t.amount);
