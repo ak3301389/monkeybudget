@@ -3,7 +3,7 @@ description: Домашняя бухгалтерия
 
 publish_to: 'none'
 
-version: 4.9.0+143
+version: 4.9.0+144
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

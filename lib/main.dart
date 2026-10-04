@@ -76,6 +76,8 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.teal,
         useMaterial3: true,
         brightness: Brightness.dark,
+        cardColor: const Color(0xFF2A2A2A),
+        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
       ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       localizationsDelegates: const [
