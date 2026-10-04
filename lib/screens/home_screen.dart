@@ -2237,6 +2237,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.green,
         ),
       );
+      _saveToFirebase();
       return;
     }
 
@@ -2302,6 +2303,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.green,
       ),
     );
+    _saveToFirebase();
   }
 
   PaymentSchedule _getNextSchedule(Payment payment) {
