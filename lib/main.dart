@@ -76,8 +76,22 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.teal,
         useMaterial3: true,
         brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212),
         cardColor: const Color(0xFF2A2A2A),
-        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
+        cardTheme: const CardThemeData(
+          color: Color(0xFF2A2A2A),
+          elevation: 0,
+        ),
+        listTileTheme: const ListTileThemeData(
+          tileColor: Color(0xFF2A2A2A),
+        ),
+        dialogTheme: const DialogThemeData(
+          backgroundColor: Color(0xFF2A2A2A),
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Color(0xFF2A2A2A),
+        ),
+        dividerColor: Colors.white24,
       ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       localizationsDelegates: const [
