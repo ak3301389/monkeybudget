@@ -347,7 +347,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 child: _buildActionButton(
                   icon: Icons.document_scanner,
                   label: 'Скан',
-                  color: Colors.grey.shade700,
+                  color: Colors.purple.shade600,
                   onTap: _onScanReceipt,
                 ),
               ),
@@ -393,21 +393,21 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8),
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.25)),
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 22),
-            SizedBox(height: 2),
+            Icon(icon, color: color, size: 24),
+            SizedBox(height: 4),
             Text(label,
                 style: TextStyle(
-                    color: color, fontSize: 11, fontWeight: FontWeight.w500)),
+                    color: color, fontSize: 13, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
