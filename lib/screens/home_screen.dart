@@ -536,6 +536,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onDeleteTransaction: _deleteTransaction,
                     onAddIncomeCategory: _addIncomeCategory,
                     onAddExpenseCategory: _addExpenseCategory,
+                    onAddIncome: () => _showIncomeExpenseDialog(true),
+                    onAddExpense: () => _showIncomeExpenseDialog(false),
+                    onAddTransfer: _showTransferDialog,
+                    onScanReceipt: _showScannerDialog,
                   )
                 : currentView == 1
                     ? AccountsScreen(
@@ -620,23 +624,15 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon: Icon(Icons.settings), label: 'Настройки'),
         ],
       ),
-      floatingActionButton: currentView == 0
+      floatingActionButton: currentView == 1
           ? FloatingActionButton.extended(
               onPressed: () {
-                _showAddTransactionDialog();
+                _showAddAccountDialog();
               },
               icon: Icon(Icons.add),
-              label: Text('Операция'),
+              label: Text('Счёт'),
             )
-          : currentView == 1
-              ? FloatingActionButton.extended(
-                  onPressed: () {
-                    _showAddAccountDialog();
-                  },
-                  icon: Icon(Icons.add),
-                  label: Text('Счёт'),
-                )
-              : null,
+          : null,
     );
   }
 

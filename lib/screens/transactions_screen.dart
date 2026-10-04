@@ -16,6 +16,10 @@ class TransactionsScreen extends StatefulWidget {
   final Function(Transaction) onDeleteTransaction;
   final Function(Category) onAddIncomeCategory;
   final Function(Category) onAddExpenseCategory;
+  final VoidCallback onAddIncome;
+  final VoidCallback onAddExpense;
+  final VoidCallback onAddTransfer;
+  final VoidCallback onScanReceipt;
 
   const TransactionsScreen({
     Key? key,
@@ -32,6 +36,10 @@ class TransactionsScreen extends StatefulWidget {
     required this.onDeleteTransaction,
     required this.onAddIncomeCategory,
     required this.onAddExpenseCategory,
+    required this.onAddIncome,
+    required this.onAddExpense,
+    required this.onAddTransfer,
+    required this.onScanReceipt,
   }) : super(key: key);
 
   @override
@@ -331,10 +339,85 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             ],
           ),
+          SizedBox(height: 8),
+          // ⭐ 4 кнопки быстрых действий
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.document_scanner,
+                  label: 'Скан',
+                  color: Colors.grey.shade700,
+                  onTap: _onScanReceipt,
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.swap_horiz,
+                  label: 'Перевод',
+                  color: Colors.blue,
+                  onTap: _onAddTransfer,
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.arrow_downward,
+                  label: 'Доход',
+                  color: Colors.green,
+                  onTap: _onAddIncome,
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.arrow_upward,
+                  label: 'Расход',
+                  color: Colors.red,
+                  onTap: _onAddExpense,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 22),
+            SizedBox(height: 2),
+            Text(label,
+                style: TextStyle(
+                    color: color, fontSize: 11, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onScanReceipt() => widget.onScanReceipt();
+  void _onAddTransfer() => widget.onAddTransfer();
+  void _onAddIncome() => widget.onAddIncome();
+  void _onAddExpense() => widget.onAddExpense();
 
   // ⭐ ДОБАВЛЕНО: выбор даты
   Future<void> _selectDateRange() async {
