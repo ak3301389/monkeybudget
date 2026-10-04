@@ -20,11 +20,13 @@ import 'scanner_screen.dart';
 class HomeScreen extends StatefulWidget {
   final StorageService storageService;
   final BackupService backupService;
+  final VoidCallback? onThemeChanged;
 
   const HomeScreen({
     Key? key,
     required this.storageService,
     required this.backupService,
+    this.onThemeChanged,
   }) : super(key: key);
 
   @override
@@ -460,6 +462,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isDarkMode = !isDarkMode;
                 widget.storageService.setIsDarkMode(isDarkMode);
               });
+              widget.onThemeChanged?.call();
             },
           ),
           IconButton(

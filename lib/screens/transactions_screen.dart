@@ -228,7 +228,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   value: _filterType,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Theme.of(context).cardColor,
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.white,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -252,7 +254,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   value: _filterCategory,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Theme.of(context).cardColor,
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.white,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -282,7 +286,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   value: _filterAccount,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Theme.of(context).cardColor,
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.white,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -309,7 +315,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           padding:
                               EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF2A2A2A)
+                                    : Colors.white,
                             border: Border.all(color: Colors.grey.shade400),
                             borderRadius: BorderRadius.circular(4),
                           ),
