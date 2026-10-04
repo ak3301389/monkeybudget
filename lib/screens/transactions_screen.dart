@@ -227,6 +227,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 child: DropdownButtonFormField(
                   value: _filterType,
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -249,6 +251,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 child: DropdownButtonFormField(
                   value: _filterCategory,
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -277,6 +281,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 child: DropdownButtonFormField(
                   value: _filterAccount,
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -303,6 +309,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           padding:
                               EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                           decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
                             border: Border.all(color: Colors.grey.shade400),
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -391,23 +398,28 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.25)),
+          border: Border.all(
+            color: color.withOpacity(isDark ? 0.5 : 0.3),
+          ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 24),
+            Icon(icon, color: isDark ? Colors.white : color, size: 24),
             SizedBox(height: 4),
             Text(label,
                 style: TextStyle(
-                    color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+                    color: isDark ? Colors.white : color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600)),
           ],
         ),
       ),

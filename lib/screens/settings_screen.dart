@@ -13,35 +13,31 @@ class SettingsScreen extends StatefulWidget {
   final BackupService backupService;
   final String currency;
   final bool showNotifications;
-  final bool isDarkMode;
   final Function(String) onCurrencyChanged;
   final Function(bool) onNotificationsChanged;
-  final Function(bool) onDarkModeChanged;
   final Function() onClearAll;
-  
+
   const SettingsScreen({
     Key? key,
     required this.storageService,
     required this.backupService,
     required this.currency,
     required this.showNotifications,
-    required this.isDarkMode,
     required this.onCurrencyChanged,
     required this.onNotificationsChanged,
-    required this.onDarkModeChanged,
     required this.onClearAll,
   }) : super(key: key);
-  
+
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isBusy = false;
-    String _version = '';
-	  String? _userEmail;
+  String _version = '';
+  String? _userEmail;
 
-    @override
+  @override
   void initState() {
     super.initState();
     _loadVersion();
@@ -49,38 +45,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _checkAuth() async {
-  final user = FirebaseAuth.instance.currentUser;
-  print('🔍 SettingsScreen _checkAuth: user = ${user?.email ?? "null"}');
-  if (user != null) {
-    setState(() {
-      _userEmail = user.email;
-    });
+    final user = FirebaseAuth.instance.currentUser;
+    print('🔍 SettingsScreen _checkAuth: user = ${user?.email ?? "null"}');
+    if (user != null) {
+      setState(() {
+        _userEmail = user.email;
+      });
+    }
   }
-}
 
-    Future<void> _loadVersion() async {
+  Future<void> _loadVersion() async {
     final info = await PackageInfo.fromPlatform();
     setState(() {
       _version = '${info.version}.${info.buildNumber}';
     });
   }
-    Future<void> _signInWithGoogle() async {
+
+  Future<void> _signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      
+
       setState(() {
         _userEmail = googleUser.email;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('✅ Вы вошли как ${googleUser.email}')),
       );
@@ -90,16 +88,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
   }
-  
-    @override
+
+  @override
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
-        Text('Настройки', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text('Настройки',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         SizedBox(height: 16),
-		
-		        Card(
+        Card(
           child: ListTile(
             leading: Icon(Icons.account_circle),
             title: Text('Войти через Google'),
@@ -108,7 +106,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         SizedBox(height: 16),
-
         Card(
           child: Column(
             children: [
@@ -119,17 +116,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: widget.showNotifications,
                 onChanged: widget.onNotificationsChanged,
               ),
-              Divider(),
-              SwitchListTile(
-                secondary: Icon(Icons.dark_mode),
-                title: Text('Тёмная тема'),
-                value: widget.isDarkMode,
-                onChanged: widget.onDarkModeChanged,
-              ),
             ],
           ),
         ),
-
         SizedBox(height: 16),
         Card(
           child: Column(
@@ -164,7 +153,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-
         SizedBox(height: 16),
         Card(
           child: Column(
@@ -185,20 +173,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-
         SizedBox(height: 16),
         Card(
           child: Column(
             children: [
               ListTile(
                 leading: Icon(Icons.delete_forever, color: Colors.red),
-                title: Text('Очистить все данные', style: TextStyle(color: Colors.red)),
+                title: Text('Очистить все данные',
+                    style: TextStyle(color: Colors.red)),
                 onTap: () => _confirmClearAll(),
               ),
             ],
           ),
         ),
-
         SizedBox(height: 16),
         Card(
           child: Column(
@@ -217,7 +204,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-
         if (_isBusy)
           Padding(
             padding: EdgeInsets.all(16),
@@ -226,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
-  
+
   Future<void> _saveToPhone() async {
     setState(() => _isBusy = true);
     try {
@@ -241,23 +227,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     setState(() => _isBusy = false);
   }
-  
+
   Future<void> _restoreFromFile() async {
     try {
       const XTypeGroup typeGroup = XTypeGroup(
         label: 'JSON',
         extensions: ['json'],
       );
-      
+
       final XFile? file = await openFile(acceptedTypeGroups: [typeGroup]);
-      
+
       if (file != null) {
         setState(() => _isBusy = true);
         final success = await widget.backupService.restoreFromFile(file.path);
         setState(() => _isBusy = false);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(success ? '✅ Данные восстановлены! Перезапустите приложение.' : '❌ Ошибка восстановления')),
+          SnackBar(
+              content: Text(success
+                  ? '✅ Данные восстановлены! Перезапустите приложение.'
+                  : '❌ Ошибка восстановления')),
         );
       }
     } catch (e) {
@@ -266,15 +255,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
   }
-  
-    Future<void> _saveToFirebase() async {
+
+  Future<void> _saveToFirebase() async {
     setState(() => _isBusy = true);
     try {
       final success = await widget.backupService.saveToFirebase();
-      
+
       if (success) {
         final code = await widget.backupService.getSyncCode();
-        
+
         if (code != null) {
           showDialog(
             context: context,
@@ -288,14 +277,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SizedBox(height: 8),
                     Text(
                       code,
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2),
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2),
                     ),
                     SizedBox(height: 8),
-                    Text('Введите этот код на другом устройстве', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text('Введите этот код на другом устройстве',
+                        style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('OK')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('OK')),
                 ],
               );
             },
@@ -313,8 +308,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     setState(() => _isBusy = false);
   }
-	
-	  void _setPin() {
+
+  void _setPin() {
     final pinController = TextEditingController();
 
     showDialog(
@@ -329,7 +324,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: InputDecoration(labelText: 'PIN-код'),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+            TextButton(
+                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
             ElevatedButton(
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
@@ -347,9 +343,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-	  void _enterSyncCode() {
+  void _enterSyncCode() {
     final codeController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -364,19 +360,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+            TextButton(
+                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
             ElevatedButton(
               onPressed: () async {
                 final code = codeController.text.trim().toUpperCase();
                 if (code.isEmpty) return;
-                
+
                 Navigator.pop(context);
                 setState(() => _isBusy = true);
                 final success = await widget.backupService.restoreByCode(code);
                 setState(() => _isBusy = false);
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? '✅ Данные загружены!' : '❌ Неверный код')),
+                  SnackBar(
+                      content: Text(
+                          success ? '✅ Данные загружены!' : '❌ Неверный код')),
                 );
               },
               child: Text('Подключить'),
@@ -386,28 +385,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
   }
-  
-    Future<void> _restoreFromFirebase() async {
+
+  Future<void> _restoreFromFirebase() async {
     setState(() => _isBusy = true);
-    
+
     final success = await widget.backupService.restoreFromFirebase();
-    
+
     setState(() => _isBusy = false);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(success ? '✅ Данные восстановлены! Перезапустите приложение.' : '❌ Ошибка загрузки')),
+      SnackBar(
+          content: Text(success
+              ? '✅ Данные восстановлены! Перезапустите приложение.'
+              : '❌ Ошибка загрузки')),
     );
-	
   }
-      
-    void _showVersionHistory() async {
+
+  void _showVersionHistory() async {
     String history = 'История версий:\n\n';
     try {
       history += await rootBundle.loadString('version_history.txt');
     } catch (e) {
       history += 'Нет данных';
     }
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -420,7 +421,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Закрыть')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Закрыть')),
           ],
         );
       },
@@ -433,7 +436,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) {
         return AlertDialog(
           title: Text('Очистить все данные?'),
-          content: Text('Все счета, операции и категории будут удалены.\nЭто действие нельзя отменить!'),
+          content: Text(
+              'Все счета, операции и категории будут удалены.\nЭто действие нельзя отменить!'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

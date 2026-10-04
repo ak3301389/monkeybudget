@@ -20,13 +20,11 @@ import 'scanner_screen.dart';
 class HomeScreen extends StatefulWidget {
   final StorageService storageService;
   final BackupService backupService;
-  final VoidCallback? onThemeChanged;
 
   const HomeScreen({
     Key? key,
     required this.storageService,
     required this.backupService,
-    this.onThemeChanged,
   }) : super(key: key);
 
   @override
@@ -455,6 +453,16 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text('💰 Домашняя бухгалтерия'),
         actions: [
           IconButton(
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            tooltip: isDarkMode ? 'Светлая тема' : 'Тёмная тема',
+            onPressed: () {
+              setState(() {
+                isDarkMode = !isDarkMode;
+                widget.storageService.setIsDarkMode(isDarkMode);
+              });
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.pie_chart),
             onPressed: () {
               Navigator.push(
@@ -473,54 +481,65 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.teal.shade100,
-              Colors.blue.shade100,
-              Colors.purple.shade100,
-            ],
-          ),
+          gradient: isDarkMode
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1A1A1A),
+                    Color(0xFF0F0F0F),
+                  ],
+                )
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.teal.shade100,
+                    Colors.blue.shade100,
+                    Colors.purple.shade100,
+                  ],
+                ),
         ),
         child: Stack(
           children: [
-            Positioned(
-              top: -80,
-              left: -80,
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.teal.withOpacity(0.5),
+            if (!isDarkMode) ...[
+              Positioned(
+                top: -80,
+                left: -80,
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.teal.withOpacity(0.5),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 200,
-              right: -100,
-              child: Container(
-                width: 260,
-                height: 260,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.purple.withOpacity(0.4),
+              Positioned(
+                top: 200,
+                right: -100,
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.purple.withOpacity(0.4),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -60,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blue.withOpacity(0.5),
+              Positioned(
+                bottom: -100,
+                left: -60,
+                child: Container(
+                  width: 240,
+                  height: 240,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.blue.withOpacity(0.5),
+                  ),
                 ),
               ),
-            ),
+            ],
             currentView == 0
                 ? TransactionsScreen(
                     transactions: transactions,
@@ -599,10 +618,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backupService: widget.backupService,
                                 currency: currency,
                                 showNotifications: showNotifications,
-                                isDarkMode: isDarkMode,
                                 onCurrencyChanged: _changeCurrency,
                                 onNotificationsChanged: _changeNotifications,
-                                onDarkModeChanged: _changeDarkMode,
                                 onClearAll: _clearAll,
                               ),
           ],
@@ -633,71 +650,6 @@ class _HomeScreenState extends State<HomeScreen> {
               label: Text('Счёт'),
             )
           : null,
-    );
-  }
-
-  void _showAddTransactionDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Добавить операцию',
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildTypeButton(
-                        'income', 'Доход', Icons.arrow_downward, Colors.green),
-                    _buildTypeButton(
-                        'expense', 'Расход', Icons.arrow_upward, Colors.red),
-                    _buildTypeButton(
-                        'transfer', 'Перевод', Icons.swap_horiz, Colors.blue),
-                    _buildTypeButton(
-                        'scan', 'Сканер', Icons.qr_code_scanner, Colors.purple),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTypeButton(
-      String type, String label, IconData icon, Color color) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-        if (type == 'transfer') {
-          _showTransferDialog();
-        } else if (type == 'scan') {
-          _showScannerDialog();
-        } else {
-          _showIncomeExpenseDialog(type == 'income');
-        }
-      },
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: color.withOpacity(0.1),
-            child: Icon(icon, color: color, size: 30),
-          ),
-          SizedBox(height: 8),
-          Text(label),
-        ],
-      ),
     );
   }
 
@@ -2375,14 +2327,6 @@ class _HomeScreenState extends State<HomeScreen> {
       showNotifications = value;
       widget.storageService.setShowNotifications(value);
     });
-  }
-
-  void _changeDarkMode(bool value) {
-    setState(() {
-      isDarkMode = value;
-      widget.storageService.setIsDarkMode(value);
-    });
-    widget.onThemeChanged?.call();
   }
 
   void _clearAll() {

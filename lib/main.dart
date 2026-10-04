@@ -56,12 +56,6 @@ class _MyAppState extends State<MyApp> {
     _isDarkMode = widget.storageService.getIsDarkMode();
   }
 
-  void _updateTheme() {
-    setState(() {
-      _isDarkMode = widget.storageService.getIsDarkMode();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -92,7 +86,6 @@ class _MyAppState extends State<MyApp> {
         '/home': (context) => HomeScreen(
               storageService: widget.storageService,
               backupService: widget.backupService,
-              onThemeChanged: _updateTheme,
             ),
       },
     );
