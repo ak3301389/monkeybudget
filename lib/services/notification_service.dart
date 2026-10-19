@@ -2,47 +2,53 @@
 import '../models.dart';
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
-  
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
+
   Future<void> init() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
     const settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
-    
+
     await _plugin.initialize(settings);
+
+    // Запрос разрешения на уведомления (Android 13+)
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
   }
-  
-  Future<void> checkRecurringPayments(List<RecurringPayment> payments) async {
+
+  /// Проверяет все платежи и показывает уведомления
+  /// для тех, что наступают сегодня или завтра.
+  Future<void> checkPayments(List<Payment> payments) async {
     final now = DateTime.now();
-    
-    for (int i = 0; i < payments.length; i++) {
-      final payment = payments[i];
-      if (!payment.isActive) continue;
-      
-      final nextDate = payment.nextDate;
-      if (nextDate == null) continue;
-      
-      // Проверяем: платёж сегодня или завтра?
-      final today = DateTime(now.year, now.month, now.day);
-      final tomorrow = today.add(Duration(days: 1));
-      final paymentDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
-      
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    for (final payment in payments) {
+      if (payment.status != 'pending') continue;
+
+      final due = payment.dueDate;
+      final paymentDate = DateTime(due.year, due.month, due.day);
+
       if (paymentDate == today || paymentDate == tomorrow) {
         final type = payment.isIncome ? 'доход' : 'платёж';
         final when = paymentDate == today ? 'Сегодня' : 'Завтра';
-        
+
         await _showNotification(
-          id: i + 1000,
+          id: payment.id.hashCode,
           title: payment.name,
-          body: '$when $type: ${payment.amount} ₽',
+          body: '$when $type: ${payment.amount.toStringAsFixed(2)} ₽',
         );
       }
     }
   }
-  
+
   Future<void> _showNotification({
     required int id,
     required String title,
@@ -55,13 +61,13 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
     );
-    
+
     const iosDetails = DarwinNotificationDetails();
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
-    
+
     await _plugin.show(id, title, body, details);
   }
 }

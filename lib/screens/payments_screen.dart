@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '../models.dart';
-import '../payment_schedule.dart';
+import 'payment_schedule.dart';
 
 class PaymentsScreen extends StatefulWidget {
   final List<Payment> payments;
@@ -34,16 +34,44 @@ class PaymentsScreen extends StatefulWidget {
   _PaymentsScreenState createState() => _PaymentsScreenState();
 }
 
-class _PaymentsScreenState extends State<PaymentsScreen> {
+class _PaymentsScreenState extends State<PaymentsScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   List<Payment> get _sortedPayments {
+    // Показываем только неоплаченные платежи (status = 'pending')
     final filtered =
-        widget.payments.where((p) => !p.schedule.isComplete).toList();
-    filtered.sort((a, b) {
-      final aDate = a.schedule.nextDate ?? DateTime(2100);
-      final bDate = b.schedule.nextDate ?? DateTime(2100);
-      return aDate.compareTo(bDate);
-    });
+        widget.payments.where((p) => p.status == 'pending').toList();
+    filtered.sort((a, b) => a.dueDate.compareTo(b.dueDate));
     return filtered;
+  }
+
+  // Ближайшие платежи: один (самый ранний) на каждую серию
+  List<Payment> get _nearestBySeries {
+    final map = <String, Payment>{};
+    for (final p in widget.payments) {
+      if (p.status != 'pending') continue;
+      final key = p.seriesId ?? p.id; // разовый платёж — сам себе серия
+      final existing = map[key];
+      if (existing == null || p.dueDate.isBefore(existing.dueDate)) {
+        map[key] = p;
+      }
+    }
+    final list = map.values.toList();
+    list.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    return list;
   }
 
   Map<String, List<Payment>> get _groupedByAccount {
@@ -78,75 +106,587 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final payments = _sortedPayments;
-
-    return ListView(
-      padding: EdgeInsets.all(16),
+    return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Ближайшие платежи',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            IconButton(
-              icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
-              onPressed: _showAddDialog,
-            ),
+        // Заголовок и кнопка "+"
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Платежи',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
+                onPressed: _showAddDialog,
+              ),
+            ],
+          ),
+        ),
+        // Вкладки
+        TabBar(
+          controller: _tabController,
+          labelColor: Colors.teal,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.teal,
+          tabs: const [
+            Tab(text: 'Ближайшие'),
+            Tab(text: 'График'),
           ],
         ),
-        SizedBox(height: 8),
-        if (payments.isEmpty)
-          Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Column(
-                children: [
-                  Icon(Icons.event_note, size: 60, color: Colors.grey.shade300),
-                  SizedBox(height: 12),
-                  Text(
-                    'Нет запланированных платежей',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          ..._groupedByAccount.entries.map((entry) {
-            final accountName = _getAccountName(entry.key);
-            final accountPayments = entry.value;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    '💳 $accountName',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.teal.shade700,
-                    ),
-                  ),
-                ),
-                ...accountPayments.map((payment) => _buildPaymentCard(payment)),
-                SizedBox(height: 8),
-              ],
-            );
-          }),
-        SizedBox(height: 16),
+        // Содержимое вкладок
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildUpcomingTab(),
+              _buildScheduleTab(),
+            ],
+          ),
+        ),
       ],
     );
   }
 
+  Widget _buildUpcomingTab() {
+    final payments = _nearestBySeries;
+    if (payments.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.event_note, size: 60, color: Colors.grey.shade300),
+              const SizedBox(height: 12),
+              Text(
+                'Нет запланированных платежей',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: payments.map((p) => _buildPaymentCard(p)).toList(),
+    );
+  }
+
+  Widget _buildScheduleTab() {
+    // Группируем все платежи по seriesId (или по id для разовых)
+    final seriesMap = <String, List<Payment>>{};
+    for (final p in widget.payments) {
+      final key = p.seriesId ?? p.id;
+      seriesMap.putIfAbsent(key, () => []).add(p);
+    }
+
+    if (seriesMap.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.calendar_month, size: 60, color: Colors.grey.shade300),
+              const SizedBox(height: 12),
+              Text(
+                'Нет графиков платежей',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Сортируем серии по ближайшей дате
+    final entries = seriesMap.entries.toList();
+    entries.sort((a, b) {
+      final aMin =
+          a.value.map((p) => p.dueDate).reduce((x, y) => x.isBefore(y) ? x : y);
+      final bMin =
+          b.value.map((p) => p.dueDate).reduce((x, y) => x.isBefore(y) ? x : y);
+      return aMin.compareTo(bMin);
+    });
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: entries.map((entry) {
+        final seriesPayments = entry.value;
+        seriesPayments.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        return _buildSeriesCard(entry.key, seriesPayments);
+      }).toList(),
+    );
+  }
+
+  Widget _buildSeriesCard(String seriesId, List<Payment> seriesPayments) {
+    final first = seriesPayments.first;
+    final accountName = _getAccountName(first.fromAccountId);
+    final total = seriesPayments.length;
+    final paid = seriesPayments.where((p) => p.status == 'paid').length;
+    final pending = total - paid;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ExpansionTile(
+        leading: Icon(
+          Icons.calendar_month,
+          color: Colors.teal,
+        ),
+        title: Text(
+          first.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          '$accountName • ${first.amount.toStringAsFixed(2)} ${widget.currency}\n'
+          'Оплачено: $paid из $total',
+          style: const TextStyle(fontSize: 12),
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'edit_series') {
+              _editSeries(seriesId, seriesPayments);
+            } else if (value == 'delete_series') {
+              _deleteSeries(seriesId, seriesPayments);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'edit_series',
+              child: ListTile(
+                leading: Icon(Icons.edit, color: Colors.blue),
+                title: Text('Редактировать серию'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete_series',
+              child: ListTile(
+                leading: Icon(Icons.delete_forever, color: Colors.red),
+                title: Text('Удалить серию'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
+        ),
+        children: [
+          ...seriesPayments.map((p) {
+            final isPaid = p.status == 'paid';
+            return ListTile(
+              dense: true,
+              onTap: () => _editSinglePayment(p),
+              leading: Icon(
+                isPaid ? Icons.check_circle : Icons.schedule,
+                color: isPaid ? Colors.green : Colors.grey,
+                size: 20,
+              ),
+              title: Text(
+                '${p.dueDate.day}.${p.dueDate.month}.${p.dueDate.year}',
+                style: TextStyle(
+                  fontWeight: isPaid ? FontWeight.normal : FontWeight.w500,
+                  color: isPaid ? Colors.grey : null,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${p.amount.toStringAsFixed(2)} ${widget.currency}',
+                    style: TextStyle(
+                      color: isPaid ? Colors.grey : Colors.teal,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (!isPaid)
+                    IconButton(
+                      icon: Icon(Icons.payment, size: 20, color: Colors.green),
+                      tooltip: 'Оплатить',
+                      onPressed: () => widget.onPayNow(p),
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
+          if (pending > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: Text(
+                'Ещё $pending платеж(ей) впереди',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ============ РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ СЕРИИ ============
+
+  Future<void> _deleteSeries(
+      String seriesId, List<Payment> seriesPayments) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Удалить серию?'),
+        content: Text(
+          'Будет удалено ${seriesPayments.length} платеж(ей) серии "${seriesPayments.first.name}". '
+          'Это действие нельзя отменить.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Удалить', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      for (final p in seriesPayments) {
+        widget.onDelete(p);
+      }
+    }
+  }
+
+  Future<void> _editSeries(
+      String seriesId, List<Payment> seriesPayments) async {
+    final first = seriesPayments.first;
+    final pendingPayments =
+        seriesPayments.where((p) => p.status != 'paid').toList();
+    if (pendingPayments.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Все платежи серии уже оплачены')),
+      );
+      return;
+    }
+
+    final nameController = TextEditingController(text: first.name);
+    final amountController =
+        TextEditingController(text: first.amount.toStringAsFixed(2));
+    String selectedFromAccountId = first.fromAccountId;
+    String selectedToAccountId = first.toAccountId;
+    String selectedCategory = first.category;
+    String? selectedSubCategory = first.subCategory;
+    String frequency = first.frequency;
+    int interval = first.interval;
+    DateTime startDate = pendingPayments.first.dueDate;
+    int count = pendingPayments.length;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Редактировать серию'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Название',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Сумма',
+                    prefixText: '${widget.currency} ',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedFromAccountId,
+                  decoration: const InputDecoration(
+                    labelText: 'Счёт',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: widget.accounts
+                      .map((a) => DropdownMenuItem(
+                            value: a.id,
+                            child: Text(a.name),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => selectedFromAccountId = v!),
+                ),
+                if (first.isIncome ||
+                    first.fromAccountId != first.toAccountId) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedToAccountId,
+                    decoration: const InputDecoration(
+                      labelText: 'Счёт зачисления',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: widget.accounts
+                        .map((a) => DropdownMenuItem(
+                              value: a.id,
+                              child: Text(a.name),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedToAccountId = v!),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: frequency,
+                  decoration: const InputDecoration(
+                    labelText: 'Периодичность',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'daily', child: Text('Ежедневно')),
+                    DropdownMenuItem(
+                        value: 'weekly', child: Text('Каждую неделю')),
+                    DropdownMenuItem(
+                        value: 'biweekly', child: Text('Раз в 2 недели')),
+                    DropdownMenuItem(
+                        value: 'monthly', child: Text('Каждый месяц')),
+                    DropdownMenuItem(
+                        value: 'yearly', child: Text('Каждый год')),
+                  ],
+                  onChanged: (v) => setState(() => frequency = v!),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Интервал (1 = каждый период)',
+                    border: OutlineInputBorder(),
+                  ),
+                  controller: TextEditingController(text: interval.toString()),
+                  onChanged: (v) => interval = int.tryParse(v) ?? 1,
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Дата начала: ${startDate.day}.${startDate.month}.${startDate.year}',
+                  ),
+                  leading: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: startDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) setState(() => startDate = picked);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Количество платежей',
+                    border: OutlineInputBorder(),
+                  ),
+                  controller: TextEditingController(text: count.toString()),
+                  onChanged: (v) => count = int.tryParse(v) ?? 12,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Сохранить'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != true) return;
+
+    final newName = nameController.text.trim();
+    final newAmount = _parseAmount(amountController.text);
+    if (newName.isEmpty || newAmount <= 0) return;
+
+    // 1. Удаляем все pending-платежи
+    for (final p in pendingPayments) {
+      widget.onDelete(p);
+    }
+
+    // 2. Генерируем новые по новому шаблону
+    final schedule = PaymentSchedule.fromPattern(
+      startDate: startDate,
+      frequency: frequency,
+      interval: interval,
+      count: count,
+    );
+
+    final newSeriesId = DateTime.now().millisecondsSinceEpoch.toString();
+    for (int i = 0; i < schedule.dates.length; i++) {
+      widget.onAdd(Payment(
+        id: '${newSeriesId}_$i',
+        seriesId: newSeriesId,
+        name: newName,
+        amount: newAmount,
+        isIncome: first.isIncome,
+        category: selectedCategory,
+        subCategory: selectedSubCategory,
+        fromAccountId: selectedFromAccountId,
+        toAccountId: selectedToAccountId,
+        dueDate: schedule.dates[i],
+        status: 'pending',
+        frequency: frequency,
+        interval: interval,
+        iconPath: first.iconPath,
+        color: first.color,
+      ));
+    }
+  }
+
+  Future<void> _editSinglePayment(Payment payment) async {
+    final isPaid = payment.status == 'paid';
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '${payment.name} — ${payment.dueDate.day}.${payment.dueDate.month}.${payment.dueDate.year}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            if (!isPaid)
+              ListTile(
+                leading: const Icon(Icons.payment, color: Colors.green),
+                title: const Text('Оплатить сейчас'),
+                onTap: () {
+                  Navigator.pop(context, 'pay');
+                },
+              ),
+            if (!isPaid)
+              ListTile(
+                leading: const Icon(Icons.edit_calendar, color: Colors.blue),
+                title: const Text('Изменить дату'),
+                onTap: () {
+                  Navigator.pop(context, 'edit_date');
+                },
+              ),
+            if (!isPaid)
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.blue),
+                title: const Text('Изменить сумму'),
+                onTap: () {
+                  Navigator.pop(context, 'edit_amount');
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Удалить этот платёж'),
+              onTap: () {
+                Navigator.pop(context, 'delete');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == null) return;
+
+    if (action == 'pay') {
+      widget.onPayNow(payment);
+    } else if (action == 'delete') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Удалить платёж?'),
+          content: Text('${payment.name} от '
+              '${payment.dueDate.day}.${payment.dueDate.month}.${payment.dueDate.year}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child:
+                  const Text('Удалить', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        widget.onDelete(payment);
+      }
+    } else if (action == 'edit_date') {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: payment.dueDate,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        widget.onUpdate(payment, payment.copyWith(dueDate: picked));
+      }
+    } else if (action == 'edit_amount') {
+      final controller = TextEditingController(
+        text: payment.amount.toStringAsFixed(2),
+      );
+      final newAmount = await showDialog<double>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Изменить сумму'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              prefixText: '${widget.currency} ',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () =>
+                  Navigator.pop(context, _parseAmount(controller.text)),
+              child: const Text('Сохранить'),
+            ),
+          ],
+        ),
+      );
+      if (newAmount != null && newAmount > 0) {
+        widget.onUpdate(payment, payment.copyWith(amount: newAmount));
+      }
+    }
+  }
+
   Widget _buildPaymentCard(Payment payment) {
-    final nextDate = payment.schedule.nextDate;
-    final isOverdue = nextDate != null && _isOverdue(nextDate);
-    final isSoon = nextDate != null && _isSoon(nextDate);
-    final isPaid = payment.isPaid;
+    final nextDate = payment.dueDate;
+    final isOverdue = _isOverdue(nextDate);
+    final isSoon = _isSoon(nextDate);
+    final isPaid = payment.status == 'paid';
 
     return Card(
       margin: EdgeInsets.only(bottom: 8),
@@ -450,7 +990,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     String frequency = 'monthly';
     int interval = 1;
     int dayOfWeek = 1;
-    int dayOfMonth = 1;
+
     DateTime startDate = DateTime.now();
 
     String expenseType = 'service';
@@ -651,7 +1191,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   frequency: frequency,
                   interval: interval,
                   dayOfWeek: frequency == 'weekly' ? dayOfWeek : null,
-                  dayOfMonth: frequency == 'monthly' ? dayOfMonth : null,
                   count: 12,
                 );
 
@@ -669,22 +1208,29 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   finalToAccountId = fromAccountId;
                 }
 
-                widget.onAdd(Payment(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: name,
-                  amount: amount,
-                  isIncome: isIncome,
-                  category: selectedCategory!,
-                  subCategory: selectedSubCategory,
-                  fromAccountId: finalFromAccountId,
-                  toAccountId: finalToAccountId,
-                  schedule: schedule,
-                  isPaid: false,
-                  frequency: frequency,
-                  interval: interval,
-                  iconPath: null,
-                  color: null,
-                ));
+                // Генерируем серию платежей из всех дат графика
+                final seriesId =
+                    DateTime.now().millisecondsSinceEpoch.toString();
+                for (int i = 0; i < schedule.dates.length; i++) {
+                  final date = schedule.dates[i];
+                  widget.onAdd(Payment(
+                    id: '${seriesId}_$i',
+                    seriesId: seriesId,
+                    name: name,
+                    amount: amount,
+                    isIncome: isIncome,
+                    category: selectedCategory!,
+                    subCategory: selectedSubCategory,
+                    fromAccountId: finalFromAccountId,
+                    toAccountId: finalToAccountId,
+                    dueDate: date,
+                    status: 'pending',
+                    frequency: frequency,
+                    interval: interval,
+                    iconPath: null,
+                    color: null,
+                  ));
+                }
 
                 Navigator.pop(context);
               },
@@ -711,7 +1257,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     String? selectedCategory = payment.category;
     String? selectedSubCategory = payment.subCategory;
     String frequency = payment.frequency;
-    DateTime startDate = payment.schedule.dates.first;
+    DateTime startDate = payment.dueDate;
 
     String expenseType = 'service';
     if (!isIncome && fromAccountId != toAccountId) {
@@ -914,7 +1460,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   frequency: frequency,
                   interval: 1,
                   dayOfWeek: frequency == 'weekly' ? 1 : null,
-                  dayOfMonth: frequency == 'monthly' ? 1 : null,
                   count: 12,
                 );
 
@@ -942,7 +1487,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     subCategory: selectedSubCategory,
                     fromAccountId: finalFromAccountId,
                     toAccountId: finalToAccountId,
-                    schedule: newSchedule,
+                    dueDate: newSchedule.nextDate ?? DateTime.now(),
+                    status: 'pending',
                     frequency: frequency,
                     interval: 1,
                     iconPath: null,

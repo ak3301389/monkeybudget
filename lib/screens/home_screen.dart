@@ -7,6 +7,7 @@ import '../services/storage_service.dart';
 import '../services/backup_service.dart';
 import '../services/scanner_service.dart';
 import '../services/update_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/update_dialog.dart';
 import 'transactions_screen.dart';
 import 'accounts_screen.dart';
@@ -14,7 +15,7 @@ import 'categories_screen.dart';
 import 'payments_screen.dart';
 import 'settings_screen.dart';
 import 'stats_screen.dart';
-import '../payment_schedule.dart';
+import 'payment_schedule.dart';
 import 'scanner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -214,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _autoSync();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdates();
+      _checkPaymentNotifications();
     });
   }
 
@@ -237,6 +239,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _checkPaymentNotifications() async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.init();
+      await notificationService.checkPayments(payments);
+    } catch (e) {
+      print('❌ Ошибка уведомлений о платежах: $e');
+    }
+  }
+
   Future<void> _autoSync() async {
     await Future.delayed(Duration(seconds: 1));
     if (mounted) {
@@ -253,9 +265,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final tomorrow = today.add(Duration(days: 1));
 
     final upcoming = payments.where((p) {
-      final nextDate = p.schedule.nextDate;
-      if (nextDate == null) return false;
-      final date = DateTime(nextDate.year, nextDate.month, nextDate.day);
+      if (p.status != 'pending') return false;
+      final date = DateTime(p.dueDate.year, p.dueDate.month, p.dueDate.day);
       return date == today || date == tomorrow;
     }).toList();
 
@@ -269,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: upcoming.map((p) {
-              final nextDate = p.schedule.nextDate!;
+              final nextDate = p.dueDate;
               final isToday =
                   DateTime(nextDate.year, nextDate.month, nextDate.day) ==
                       today;
@@ -331,6 +342,26 @@ class _HomeScreenState extends State<HomeScreen> {
       expenseSubCategories = widget.storageService.loadExpenseSubCategories();
       incomeSubCategories = widget.storageService.loadIncomeSubCategories();
       payments = widget.storageService.loadPayments();
+
+      // Платежи, у которых наступил срок оплаты — возвращаем в статус pending
+      // (чтобы снова можно было оплатить, если платёж был оплачен заранее)
+      final now = DateTime.now();
+      bool paymentsChanged = false;
+      for (int i = 0; i < payments.length; i++) {
+        final p = payments[i];
+        if (p.status == 'paid' && p.paidAt != null) {
+          if (!p.dueDate.isAfter(now)) {
+            payments[i] = p.copyWith(
+              status: 'pending',
+              paidAt: null,
+            );
+            paymentsChanged = true;
+          }
+        }
+      }
+      if (paymentsChanged) {
+        widget.storageService.savePayments(payments);
+      }
       currency = widget.storageService.getCurrency();
       showNotifications = widget.storageService.getShowNotifications();
       isDarkMode = widget.storageService.getIsDarkMode();
@@ -1628,10 +1659,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showEditAccountDialog(Account account) {
     final nameController = TextEditingController(text: account.name);
     final balanceController =
-        TextEditingController(text: account.balance.toString());
+        TextEditingController(text: account.balance.toStringAsFixed(2));
     final bankController = TextEditingController(text: account.bank);
     final creditLimitController =
-        TextEditingController(text: account.creditLimit.toString());
+        TextEditingController(text: account.creditLimit.toStringAsFixed(2));
 
     String accountType = account.type;
     String selectedColor = account.color;
@@ -1865,11 +1896,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _updateTransaction(Transaction oldT, Transaction newT) {
     setState(() {
+      // 1. Отменить старую операцию
+      if (oldT.isTransfer) {
+        _updateAccountBalance(oldT.accountId, oldT.amount);
+        if (oldT.toAccountId != null) {
+          _updateAccountBalance(oldT.toAccountId!, -oldT.amount);
+        }
+      } else {
+        _updateAccountBalance(
+            oldT.accountId, oldT.isIncome ? -oldT.amount : oldT.amount);
+      }
+
+      // 2. Применить новую операцию
+      if (newT.isTransfer) {
+        _updateAccountBalance(newT.accountId, -newT.amount);
+        if (newT.toAccountId != null) {
+          _updateAccountBalance(newT.toAccountId!, newT.amount);
+        }
+      } else {
+        _updateAccountBalance(
+            newT.accountId, newT.isIncome ? newT.amount : -newT.amount);
+      }
+
+      // 3. Заменить запись в списке
       int index = transactions.indexWhere((t) => t.id == oldT.id);
       if (index != -1) {
         transactions[index] = newT;
       }
+
       widget.storageService.saveTransactions(transactions);
+      widget.storageService.saveAccounts(accounts);
     });
     _saveToFirebase();
   }
@@ -1909,6 +1965,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       widget.storageService.saveAccounts(accounts);
     });
+    _saveToFirebase();
   }
 
   void _reorderAccounts(List<Account> reordered) {
@@ -2064,11 +2121,9 @@ class _HomeScreenState extends State<HomeScreen> {
         balance: toAccount.balance + payment.amount,
       );
 
-      final newSchedule = _getNextSchedule(payment);
-
       final updatedPayment = payment.copyWith(
-        isPaid: true,
-        schedule: newSchedule,
+        status: 'paid',
+        paidAt: DateTime.now(),
       );
 
       final transaction = Transaction(
@@ -2107,6 +2162,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
       _saveToFirebase();
+      _checkPaymentNotifications();
       return;
     }
 
@@ -2142,11 +2198,9 @@ class _HomeScreenState extends State<HomeScreen> {
         balance: toAccount.balance + payment.amount,
       );
 
-      final newSchedule = _getNextSchedule(payment);
-
       final updatedPayment = payment.copyWith(
-        isPaid: true,
-        schedule: newSchedule,
+        status: 'paid',
+        paidAt: DateTime.now(),
       );
 
       final transaction = Transaction(
@@ -2189,6 +2243,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
       _saveToFirebase();
+      _checkPaymentNotifications();
       return;
     }
 
@@ -2212,11 +2267,9 @@ class _HomeScreenState extends State<HomeScreen> {
       balance: fromAccount.balance - payment.amount,
     );
 
-    final newSchedule = _getNextSchedule(payment);
-
     final updatedPayment = payment.copyWith(
-      isPaid: true,
-      schedule: newSchedule,
+      status: 'paid',
+      paidAt: DateTime.now(),
     );
 
     final transaction = Transaction(
@@ -2255,54 +2308,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     _saveToFirebase();
-  }
-
-  PaymentSchedule _getNextSchedule(Payment payment) {
-    final currentDate = payment.schedule.nextDate;
-    if (currentDate == null) {
-      return payment.schedule.advance();
-    }
-
-    DateTime? nextDate;
-    switch (payment.frequency) {
-      case 'daily':
-        nextDate = currentDate.add(Duration(days: payment.interval));
-        break;
-      case 'weekly':
-        nextDate = currentDate.add(Duration(days: 7 * payment.interval));
-        break;
-      case 'biweekly':
-        nextDate = currentDate.add(Duration(days: 14));
-        break;
-      case 'monthly':
-        final day = currentDate.day;
-        if (currentDate.month == 12) {
-          nextDate = DateTime(currentDate.year + 1, 1, day);
-        } else {
-          nextDate = DateTime(currentDate.year, currentDate.month + 1, day);
-        }
-        if (nextDate.day != day) {
-          if (currentDate.month == 12) {
-            nextDate = DateTime(currentDate.year + 1, 1, 0);
-          } else {
-            nextDate = DateTime(currentDate.year, currentDate.month + 1, 0);
-          }
-        }
-        break;
-      case 'yearly':
-        nextDate =
-            DateTime(currentDate.year + 1, currentDate.month, currentDate.day);
-        break;
-      default:
-        nextDate = currentDate.add(Duration(days: payment.interval));
-    }
-
-    return PaymentSchedule.fromPattern(
-      startDate: nextDate,
-      frequency: payment.frequency,
-      interval: payment.interval,
-      count: 12,
-    );
+    _checkPaymentNotifications();
   }
 
   // ⭐ СОХРАНЕНИЕ В FIREBASE

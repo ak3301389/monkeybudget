@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'payment_schedule.dart';
+import 'screens/payment_schedule.dart';
 
 class Account {
   final String id;
@@ -341,6 +341,7 @@ class RecurringPayment {
 
 class Payment {
   final String id;
+  final String? seriesId; // null, если платёж разовый
   final String name;
   final double amount;
   final bool isIncome;
@@ -348,8 +349,9 @@ class Payment {
   final String? subCategory;
   final String fromAccountId;
   final String toAccountId;
-  final PaymentSchedule schedule;
-  final bool isPaid;
+  final DateTime dueDate; // когда должен быть оплачен
+  final String status; // 'pending' | 'paid'
+  final DateTime? paidAt; // когда фактически оплачен
   final String frequency;
   final int interval;
   final String? iconPath;
@@ -357,6 +359,7 @@ class Payment {
 
   Payment({
     required this.id,
+    this.seriesId,
     required this.name,
     required this.amount,
     required this.isIncome,
@@ -364,8 +367,9 @@ class Payment {
     this.subCategory,
     required this.fromAccountId,
     required this.toAccountId,
-    required this.schedule,
-    this.isPaid = false,
+    required this.dueDate,
+    this.status = 'pending',
+    this.paidAt,
     this.frequency = 'monthly',
     this.interval = 1,
     this.iconPath,
@@ -374,6 +378,7 @@ class Payment {
 
   Payment copyWith({
     String? id,
+    String? seriesId,
     String? name,
     double? amount,
     bool? isIncome,
@@ -381,8 +386,9 @@ class Payment {
     String? subCategory,
     String? fromAccountId,
     String? toAccountId,
-    PaymentSchedule? schedule,
-    bool? isPaid,
+    DateTime? dueDate,
+    String? status,
+    DateTime? paidAt,
     String? frequency,
     int? interval,
     String? iconPath,
@@ -390,6 +396,7 @@ class Payment {
   }) {
     return Payment(
       id: id ?? this.id,
+      seriesId: seriesId ?? this.seriesId,
       name: name ?? this.name,
       amount: amount ?? this.amount,
       isIncome: isIncome ?? this.isIncome,
@@ -397,8 +404,9 @@ class Payment {
       subCategory: subCategory ?? this.subCategory,
       fromAccountId: fromAccountId ?? this.fromAccountId,
       toAccountId: toAccountId ?? this.toAccountId,
-      schedule: schedule ?? this.schedule,
-      isPaid: isPaid ?? this.isPaid,
+      dueDate: dueDate ?? this.dueDate,
+      status: status ?? this.status,
+      paidAt: paidAt ?? this.paidAt,
       frequency: frequency ?? this.frequency,
       interval: interval ?? this.interval,
       iconPath: iconPath ?? this.iconPath,
@@ -408,6 +416,7 @@ class Payment {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'seriesId': seriesId,
         'name': name,
         'amount': amount,
         'isIncome': isIncome,
@@ -415,8 +424,9 @@ class Payment {
         'subCategory': subCategory,
         'fromAccountId': fromAccountId,
         'toAccountId': toAccountId,
-        'schedule': schedule.toJson(),
-        'isPaid': isPaid,
+        'dueDate': dueDate.toIso8601String(),
+        'status': status,
+        'paidAt': paidAt?.toIso8601String(),
         'frequency': frequency,
         'interval': interval,
         'iconPath': iconPath,
@@ -425,15 +435,17 @@ class Payment {
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
         id: json['id'],
+        seriesId: json['seriesId'],
         name: json['name'],
         amount: (json['amount'] ?? 0).toDouble(),
-        isIncome: json['isIncome'],
-        category: json['category'],
+        isIncome: json['isIncome'] ?? false,
+        category: json['category'] ?? '',
         subCategory: json['subCategory'],
-        fromAccountId: json['fromAccountId'],
-        toAccountId: json['toAccountId'],
-        schedule: PaymentSchedule.fromJson(json['schedule']),
-        isPaid: json['isPaid'] ?? false,
+        fromAccountId: json['fromAccountId'] ?? '',
+        toAccountId: json['toAccountId'] ?? '',
+        dueDate: DateTime.parse(json['dueDate']),
+        status: json['status'] ?? 'pending',
+        paidAt: json['paidAt'] != null ? DateTime.parse(json['paidAt']) : null,
         frequency: json['frequency'] ?? 'monthly',
         interval: json['interval'] ?? 1,
         iconPath: json['iconPath'],
