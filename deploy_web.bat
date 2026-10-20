@@ -1,5 +1,5 @@
 @echo off
-cd /d D:\home_budget_mob
+cd /d D:\APP\home_budget_mob
 echo Building web...
 call D:\flutter\bin\flutter.bat build web --release --no-tree-shake-icons
 if errorlevel 1 (

@@ -1,5 +1,5 @@
 @echo off
-cd /d D:\home_budget_mob
+cd /d D:\APP\home_budget_mob
 
 REM Читаем текущую версию
 for /f "tokens=2 delims=:+" %%a in ('findstr "version:" pubspec.yaml') do (

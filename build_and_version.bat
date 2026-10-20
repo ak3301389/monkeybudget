@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-cd /d D:\home_budget_mob
+cd /d D:\APP\home_budget_mob
 
 for /f "tokens=2" %%a in ('findstr /b "version:" pubspec.yaml') do set "full_ver=%%a"
 
