@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models.dart';
 import 'payment_schedule.dart';
+import 'dart:convert';
 
 class PaymentsScreen extends StatefulWidget {
   final List<Payment> payments;
@@ -118,9 +120,19 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 'Платежи',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              IconButton(
-                icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
-                onPressed: _showAddDialog,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.upload_file, color: Colors.teal, size: 28),
+                    tooltip: 'Импорт из файла',
+                    onPressed: _importFromJson,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
+                    onPressed: _showAddDialog,
+                  ),
+                ],
               ),
             ],
           ),
@@ -1240,6 +1252,216 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _importFromJson() async {
+    try {
+      // 1. Выбор файла
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final bytes = result.files.first.bytes;
+      if (bytes == null) return;
+
+      final content = utf8.decode(bytes);
+      final List<dynamic> parsed = jsonDecode(content);
+
+      // 2. Парсим в список (date, amount)
+      final items = <Map<String, dynamic>>[];
+      for (final item in parsed) {
+        final date = DateTime.tryParse(item['date'] ?? '');
+        final amount = (item['amount'] ?? 0).toDouble();
+        if (date != null && amount > 0) {
+          items.add({'date': date, 'amount': amount});
+        }
+      }
+      if (items.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Файл не содержит корректных данных')),
+        );
+        return;
+      }
+
+      // 3. Диалог: название, счёт, категория, тип
+      final nameController = TextEditingController(
+        text: result.files.first.name.replaceAll('.json', ''),
+      );
+      String selectedFromAccountId =
+          widget.accounts.isNotEmpty ? widget.accounts.first.id : '';
+      String selectedCategory = widget.expenseCategories.isNotEmpty
+          ? widget.expenseCategories.first.name
+          : 'Другое';
+      bool isIncome = false;
+      String expenseType = 'service'; // service | transfer
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text('Импорт платежей'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Найдено ${items.length} платежей',
+                      style: TextStyle(color: Colors.grey.shade600)),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Название серии',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedFromAccountId,
+                    decoration: const InputDecoration(
+                      labelText: 'Счёт',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: widget.accounts
+                        .map((a) => DropdownMenuItem(
+                              value: a.id,
+                              child: Text(a.name),
+                            ))
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => selectedFromAccountId = v!),
+                  ),
+                  const SizedBox(height: 12),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'expense', label: Text('Расход')),
+                      ButtonSegment(value: 'income', label: Text('Доход')),
+                    ],
+                    selected: {isIncome ? 'income' : 'expense'},
+                    onSelectionChanged: (v) =>
+                        setState(() => isIncome = v.first == 'income'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: 'Категория',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: (isIncome
+                            ? widget.incomeCategories
+                            : widget.expenseCategories)
+                        .map((c) => DropdownMenuItem(
+                              value: c.name,
+                              child: Text(c.name),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedCategory = v!),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Импортировать'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      final name = nameController.text.trim();
+      if (name.isEmpty || selectedFromAccountId.isEmpty) return;
+
+      // 4. Проверка: есть ли уже серия с таким названием + счёт
+      final existingSeries = <Payment>[];
+      for (final p in widget.payments) {
+        if (p.name == name && p.fromAccountId == selectedFromAccountId) {
+          existingSeries.add(p);
+        }
+      }
+
+      // 5. Если есть — спросить про замену
+      if (existingSeries.isNotEmpty) {
+        final pendingExisting =
+            existingSeries.where((p) => p.status != 'paid').toList();
+        if (!mounted) return;
+        final replace = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Серия уже существует'),
+            content: Text(
+              'Серия "$name" уже есть (${existingSeries.length} платежей, '
+              '${existingSeries.where((p) => p.status == 'paid').length} оплачено).\n\n'
+              'Заменить ${pendingExisting.length} ожидающих платежей?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Заменить'),
+              ),
+            ],
+          ),
+        );
+        if (replace != true) return;
+
+        // Удаляем только pending
+        for (final p in pendingExisting) {
+          widget.onDelete(p);
+        }
+      }
+
+      // 6. Создаём новые платежи из файла
+      final newSeriesId = DateTime.now().millisecondsSinceEpoch.toString();
+      final toAccountId = isIncome || expenseType == 'transfer'
+          ? selectedFromAccountId
+          : selectedFromAccountId;
+
+      for (int i = 0; i < items.length; i++) {
+        final item = items[i];
+        widget.onAdd(Payment(
+          id: '${newSeriesId}_$i',
+          seriesId: newSeriesId,
+          name: name,
+          amount: item['amount'],
+          isIncome: isIncome,
+          category: selectedCategory,
+          subCategory: null,
+          fromAccountId: selectedFromAccountId,
+          toAccountId: toAccountId,
+          dueDate: item['date'],
+          status: 'pending',
+          frequency: 'monthly',
+          interval: 1,
+          iconPath: null,
+          color: null,
+        ));
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Импортировано ${items.length} платежей')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка импорта: $e')),
+      );
+    }
   }
 
   // ============================================================
