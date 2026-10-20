@@ -443,9 +443,12 @@ class Payment {
         subCategory: json['subCategory'],
         fromAccountId: json['fromAccountId'] ?? '',
         toAccountId: json['toAccountId'] ?? '',
-        dueDate: DateTime.parse(json['dueDate']),
+        dueDate: DateTime.tryParse(json['dueDate']?.toString() ?? '') ??
+            DateTime.now(),
         status: json['status'] ?? 'pending',
-        paidAt: json['paidAt'] != null ? DateTime.parse(json['paidAt']) : null,
+        paidAt: json['paidAt'] != null
+            ? DateTime.tryParse(json['paidAt'].toString())
+            : null,
         frequency: json['frequency'] ?? 'monthly',
         interval: json['interval'] ?? 1,
         iconPath: json['iconPath'],

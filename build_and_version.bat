@@ -76,7 +76,7 @@ echo Done! Web: build\web\
 
 echo.
 echo === DEPLOY TO FIREBASE ===
-call firebase deploy --only hosting:monkeybudget
+call "C:\Users\33013\AppData\Roaming\npm\firebase.cmd" deploy --only hosting:monkeybudget
 
 if errorlevel 1 (
   echo FIREBASE ERROR!

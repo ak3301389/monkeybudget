@@ -1,6 +1,7 @@
 ﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import '../models.dart';
 import '../services/storage_service.dart';
@@ -220,6 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkUpdates() async {
+    // В вебе обновления не проверяем — там приложение обновляется перезагрузкой
+    if (kIsWeb) return;
     try {
       final update = await UpdateService.checkForUpdate();
       if (update != null && mounted) {
@@ -619,6 +622,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             onUpdate: _updatePayment,
                             onDelete: _deletePayment,
                             onPayNow: _onPayNow,
+                            onCancelPayment: _cancelPayment,
                           )
                         : currentView == 3
                             ? CategoriesScreen(
@@ -2309,6 +2313,88 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     _saveToFirebase();
     _checkPaymentNotifications();
+  }
+
+  void _cancelPayment(Payment payment) {
+    if (payment.status != 'paid') return;
+
+    setState(() {
+      // 1. Откатываем балансы
+      if (payment.isIncome) {
+        // Доход: снимаем с toAccount
+        final toIndex = accounts.indexWhere((a) => a.id == payment.toAccountId);
+        if (toIndex != -1) {
+          accounts[toIndex] = accounts[toIndex].copyWith(
+            balance: accounts[toIndex].balance - payment.amount,
+          );
+        }
+      } else {
+        final isTransfer = payment.toAccountId.isNotEmpty &&
+            payment.fromAccountId != payment.toAccountId;
+
+        if (isTransfer) {
+          // Перевод: возвращаем на fromAccount, снимаем с toAccount
+          final fromIndex =
+              accounts.indexWhere((a) => a.id == payment.fromAccountId);
+          if (fromIndex != -1) {
+            accounts[fromIndex] = accounts[fromIndex].copyWith(
+              balance: accounts[fromIndex].balance + payment.amount,
+            );
+          }
+          final toIndex =
+              accounts.indexWhere((a) => a.id == payment.toAccountId);
+          if (toIndex != -1) {
+            accounts[toIndex] = accounts[toIndex].copyWith(
+              balance: accounts[toIndex].balance - payment.amount,
+            );
+          }
+        } else {
+          // Услуга: возвращаем на fromAccount
+          final fromIndex =
+              accounts.indexWhere((a) => a.id == payment.fromAccountId);
+          if (fromIndex != -1) {
+            accounts[fromIndex] = accounts[fromIndex].copyWith(
+              balance: accounts[fromIndex].balance + payment.amount,
+            );
+          }
+        }
+      }
+
+      // 2. Удаляем транзакцию, созданную при оплате
+      // Ищем по: сумма + accountId + дата (близкая к paidAt)
+      if (payment.paidAt != null) {
+        final paidDate = payment.paidAt!;
+        transactions.removeWhere((t) {
+          final dateDiff = t.date.difference(paidDate).inSeconds.abs();
+          return t.amount == payment.amount &&
+              t.accountId == payment.fromAccountId &&
+              dateDiff < 60; // в пределах минуты
+        });
+      }
+
+      // 3. Возвращаем платёж в pending
+      final paymentIndex = payments.indexWhere((p) => p.id == payment.id);
+      if (paymentIndex != -1) {
+        payments[paymentIndex] = payment.copyWith(
+          status: 'pending',
+          paidAt: null,
+        );
+      }
+
+      // 4. Сохраняем
+      widget.storageService.savePayments(payments);
+      widget.storageService.saveAccounts(accounts);
+      widget.storageService.saveTransactions(transactions);
+    });
+
+    _saveToFirebase();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Оплата "${payment.name}" отменена'),
+        backgroundColor: Colors.orange,
+      ),
+    );
   }
 
   // ⭐ СОХРАНЕНИЕ В FIREBASE

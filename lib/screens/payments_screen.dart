@@ -16,6 +16,7 @@ class PaymentsScreen extends StatefulWidget {
   final Function(Payment, Payment) onUpdate;
   final Function(Payment) onDelete;
   final Function(Payment) onPayNow;
+  final Function(Payment) onCancelPayment;
 
   const PaymentsScreen({
     Key? key,
@@ -30,6 +31,7 @@ class PaymentsScreen extends StatefulWidget {
     required this.onUpdate,
     required this.onDelete,
     required this.onPayNow,
+    required this.onCancelPayment,
   }) : super(key: key);
 
   @override
@@ -585,6 +587,14 @@ class _PaymentsScreenState extends State<PaymentsScreen>
               ),
             ),
             const Divider(height: 1),
+            if (isPaid)
+              ListTile(
+                leading: const Icon(Icons.undo, color: Colors.orange),
+                title: const Text('Отменить оплату'),
+                onTap: () {
+                  Navigator.pop(context, 'cancel_pay');
+                },
+              ),
             if (!isPaid)
               ListTile(
                 leading: const Icon(Icons.payment, color: Colors.green),
@@ -625,6 +635,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
     if (action == 'pay') {
       widget.onPayNow(payment);
+    } else if (action == 'cancel_pay') {
+      widget.onCancelPayment(payment);
     } else if (action == 'delete') {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -1293,11 +1305,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       );
       String selectedFromAccountId =
           widget.accounts.isNotEmpty ? widget.accounts.first.id : '';
+      String selectedToAccountId =
+          widget.accounts.isNotEmpty ? widget.accounts.first.id : '';
       String selectedCategory = widget.expenseCategories.isNotEmpty
           ? widget.expenseCategories.first.name
           : 'Другое';
-      bool isIncome = false;
-      String expenseType = 'service'; // service | transfer
+      String expenseType = 'service'; // service | transfer | income
 
       final confirmed = await showDialog<bool>(
         context: context,
@@ -1334,15 +1347,34 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (v) =>
                         setState(() => selectedFromAccountId = v!),
                   ),
+                  if (expenseType == 'transfer') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedToAccountId,
+                      decoration: const InputDecoration(
+                        labelText: 'Счёт зачисления',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: widget.accounts
+                          .map((a) => DropdownMenuItem(
+                                value: a.id,
+                                child: Text(a.name),
+                              ))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => selectedToAccountId = v!),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   SegmentedButton<String>(
                     segments: const [
-                      ButtonSegment(value: 'expense', label: Text('Расход')),
+                      ButtonSegment(value: 'service', label: Text('Услуга')),
+                      ButtonSegment(value: 'transfer', label: Text('Перевод')),
                       ButtonSegment(value: 'income', label: Text('Доход')),
                     ],
-                    selected: {isIncome ? 'income' : 'expense'},
+                    selected: {expenseType},
                     onSelectionChanged: (v) =>
-                        setState(() => isIncome = v.first == 'income'),
+                        setState(() => expenseType = v.first),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -1351,7 +1383,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       labelText: 'Категория',
                       border: OutlineInputBorder(),
                     ),
-                    items: (isIncome
+                    items: (expenseType == 'income'
                             ? widget.incomeCategories
                             : widget.expenseCategories)
                         .map((c) => DropdownMenuItem(
@@ -1427,9 +1459,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
       // 6. Создаём новые платежи из файла
       final newSeriesId = DateTime.now().millisecondsSinceEpoch.toString();
-      final toAccountId = isIncome || expenseType == 'transfer'
-          ? selectedFromAccountId
-          : selectedFromAccountId;
+      final isIncome = expenseType == 'income';
+      final toAccountId = expenseType == 'transfer'
+          ? selectedToAccountId
+          : (expenseType == 'income' ? selectedFromAccountId : '');
 
       for (int i = 0; i < items.length; i++) {
         final item = items[i];
