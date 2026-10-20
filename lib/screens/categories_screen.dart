@@ -10,6 +10,8 @@ class CategoriesScreen extends StatefulWidget {
   final List<SubCategory> incomeSubCategories;
   final Function(Category) onAddExpenseCategory;
   final Function(Category) onAddIncomeCategory;
+  final Function(Category, Category)? onUpdateExpenseCategory;
+  final Function(Category, Category)? onUpdateIncomeCategory;
   final Function(Category) onDeleteExpenseCategory;
   final Function(Category) onDeleteIncomeCategory;
   final Function(Category) onAddTransferCategory;
@@ -21,22 +23,24 @@ class CategoriesScreen extends StatefulWidget {
   final Function(SubCategory) onDeleteExpenseSubCategory;
   final Function(SubCategory) onDeleteIncomeSubCategory;
   final List<Map<String, dynamic>> categoryIcons;
-  
+
   const CategoriesScreen({
     Key? key,
     required this.expenseCategories,
     required this.incomeCategories,
-	required this.transferCategories,
-	required this.transferSubCategories,
+    required this.transferCategories,
+    required this.transferSubCategories,
     required this.expenseSubCategories,
     required this.incomeSubCategories,
     required this.onAddExpenseCategory,
     required this.onAddIncomeCategory,
+    this.onUpdateExpenseCategory,
+    this.onUpdateIncomeCategory,
     required this.onDeleteExpenseCategory,
     required this.onDeleteIncomeCategory,
-	required this.onAddTransferCategory,
+    required this.onAddTransferCategory,
     required this.onDeleteTransferCategory,
-	this.onAddTransferSubCategory,
+    this.onAddTransferSubCategory,
     this.onDeleteTransferSubCategory,
     required this.onAddExpenseSubCategory,
     required this.onAddIncomeSubCategory,
@@ -44,14 +48,21 @@ class CategoriesScreen extends StatefulWidget {
     required this.onDeleteIncomeSubCategory,
     required this.categoryIcons,
   }) : super(key: key);
-  
+
   @override
   _CategoriesScreenState createState() => _CategoriesScreenState();
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   bool showExpense = true;
-  
+
+  IconData _getIconByName(String name) {
+    for (final item in widget.categoryIcons) {
+      if (item['name'] == name) return item['icon'] as IconData;
+    }
+    return Icons.category;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -73,8 +84,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           Expanded(
             child: TabBarView(
               children: [
-                _buildCategoryList(widget.expenseCategories, widget.expenseSubCategories, true),
-                _buildCategoryList(widget.incomeCategories, widget.incomeSubCategories, false),
+                _buildCategoryList(widget.expenseCategories,
+                    widget.expenseSubCategories, true),
+                _buildCategoryList(
+                    widget.incomeCategories, widget.incomeSubCategories, false),
                 _buildTransferCategoryList(),
               ],
             ),
@@ -84,8 +97,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
-  
-  Widget _buildCategoryList(List<Category> categories, List<SubCategory> subCategories, bool isExpense) {
+  Widget _buildCategoryList(List<Category> categories,
+      List<SubCategory> subCategories, bool isExpense) {
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
@@ -95,33 +108,43 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             child: ExpansionTile(
               leading: CircleAvatar(
                 backgroundColor: _getColorFromHex(category.color),
-                child: Icon(category.icon, color: Colors.white, size: 20),
+                child: Icon(_getIconByName(category.iconName),
+                    color: Colors.white, size: 20),
               ),
-              title: Text(category.name),
+              title: InkWell(
+                onTap: () => _showEditCategoryDialog(category, isExpense),
+                child: Text(category.name),
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(Icons.add, color: Colors.teal),
-                    onPressed: () => _showAddSubCategoryDialog(category, isExpense),
+                    onPressed: () =>
+                        _showAddSubCategoryDialog(category, isExpense),
                   ),
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.red, size: 20),
-                    onPressed: () => _confirmDeleteCategory(category, isExpense),
+                    onPressed: () =>
+                        _confirmDeleteCategory(category, isExpense),
                   ),
                 ],
               ),
               children: [
-                for (var sub in subCategories.where((s) => s.parentName == category.name))
+                for (var sub in subCategories
+                    .where((s) => s.parentName == category.name))
                   ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: _getColorFromHex(category.color).withOpacity(0.3),
-                      child: Icon(sub.icon, size: 16, color: _getColorFromHex(category.color)),
+                      backgroundColor:
+                          _getColorFromHex(category.color).withOpacity(0.3),
+                      child: Icon(sub.icon,
+                          size: 16, color: _getColorFromHex(category.color)),
                     ),
                     title: Text(sub.name),
                     trailing: IconButton(
                       icon: Icon(Icons.delete, color: Colors.red, size: 18),
-                      onPressed: () => _confirmDeleteSubCategory(sub, isExpense),
+                      onPressed: () =>
+                          _confirmDeleteSubCategory(sub, isExpense),
                     ),
                   ),
               ],
@@ -136,12 +159,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ],
     );
   }
-  
+
   void _showAddCategoryDialog(bool isExpense) {
     final nameController = TextEditingController();
     String selectedColor = '#607D8B';
-    IconData selectedIcon = Icons.category;
-    
+    String selectedIconName = 'category';
+
     showDialog(
       context: context,
       builder: (context) {
@@ -155,45 +178,69 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   children: [
                     TextField(
                       controller: nameController,
-                      decoration: InputDecoration(labelText: 'Название', border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                          labelText: 'Название', border: OutlineInputBorder()),
                     ),
                     SizedBox(height: 16),
-                    Text('Иконка:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Иконка:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
                       children: widget.categoryIcons.map((iconData) {
                         final icon = iconData['icon'] as IconData;
+                        final iconName =
+                            iconData['name'] as String? ?? 'category';
                         return InkWell(
                           onTap: () {
                             setState(() {
-                              selectedIcon = icon;
+                              selectedIconName = iconName;
                             });
                           },
                           child: Container(
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: selectedIcon == icon
+                              color: selectedIconName == iconName
                                   ? _getColorFromHex(selectedColor)
                                   : Colors.grey.shade200,
                               borderRadius: BorderRadius.circular(10),
-                              border: selectedIcon == icon
+                              border: selectedIconName == iconName
                                   ? Border.all(color: Colors.black, width: 2)
                                   : null,
                             ),
                             child: Icon(
                               icon,
-                              color: selectedIcon == icon ? Colors.white : Colors.grey.shade700,
+                              color: selectedIconName == iconName
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
                             ),
                           ),
                         );
                       }).toList(),
                     ),
                     SizedBox(height: 16),
-                    Text('Цвет:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Цвет:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
-                      children: ['#607D8B', '#FF5722', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#E91E63', '#795548', '#3F51B5', '#009688', '#8BC34A', '#FFC107', '#00BCD4', '#673AB7', '#F44336', '#CDDC39'].map((color) {
+                      children: [
+                        '#607D8B',
+                        '#FF5722',
+                        '#2196F3',
+                        '#4CAF50',
+                        '#FF9800',
+                        '#9C27B0',
+                        '#E91E63',
+                        '#795548',
+                        '#3F51B5',
+                        '#009688',
+                        '#8BC34A',
+                        '#FFC107',
+                        '#00BCD4',
+                        '#673AB7',
+                        '#F44336',
+                        '#CDDC39'
+                      ].map((color) {
                         return InkWell(
                           onTap: () {
                             setState(() {
@@ -226,8 +273,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   onPressed: () {
                     final name = nameController.text.trim();
                     if (name.isEmpty) return;
-                    
-                    final category = Category(name, selectedIcon, selectedColor);
+
+                    final category =
+                        Category(name, selectedIconName, selectedColor);
                     if (isExpense) {
                       widget.onAddExpenseCategory(category);
                     } else {
@@ -244,10 +292,143 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
     );
   }
-  
+
+  void _showEditCategoryDialog(Category category, bool isExpense) {
+    final nameController = TextEditingController(text: category.name);
+    String selectedColor = category.color;
+    String selectedIconName = category.iconName;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Редактировать категорию'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                          labelText: 'Название', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 16),
+                    Text('Иконка:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Wrap(
+                      spacing: 8,
+                      children: widget.categoryIcons.map((iconData) {
+                        final icon = iconData['icon'] as IconData;
+                        final iconName =
+                            iconData['name'] as String? ?? 'category';
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectedIconName = iconName;
+                            });
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: selectedIconName == iconName
+                                  ? _getColorFromHex(selectedColor)
+                                  : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(10),
+                              border: selectedIconName == iconName
+                                  ? Border.all(color: Colors.black, width: 2)
+                                  : null,
+                            ),
+                            child: Icon(
+                              icon,
+                              color: selectedIconName == iconName
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 16),
+                    Text('Цвет:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        '#607D8B',
+                        '#FF5722',
+                        '#2196F3',
+                        '#4CAF50',
+                        '#FF9800',
+                        '#9C27B0',
+                        '#E91E63',
+                        '#795548',
+                        '#3F51B5',
+                        '#009688',
+                        '#8BC34A',
+                        '#FFC107',
+                        '#00BCD4',
+                        '#673AB7',
+                        '#F44336',
+                        '#CDDC39'
+                      ].map((color) {
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectedColor = color;
+                            });
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _getColorFromHex(color),
+                              shape: BoxShape.circle,
+                              border: selectedColor == color
+                                  ? Border.all(color: Colors.black, width: 3)
+                                  : null,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final newName = nameController.text.trim();
+                    if (newName.isEmpty) return;
+
+                    final updated =
+                        Category(newName, selectedIconName, selectedColor);
+                    if (isExpense) {
+                      widget.onUpdateExpenseCategory?.call(category, updated);
+                    } else {
+                      widget.onUpdateIncomeCategory?.call(category, updated);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showAddSubCategoryDialog(Category category, bool isExpense) {
     final nameController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -255,7 +436,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           title: Text('Новая подкатегория'),
           content: TextField(
             controller: nameController,
-            decoration: InputDecoration(labelText: 'Название', border: OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: 'Название', border: OutlineInputBorder()),
           ),
           actions: [
             TextButton(
@@ -266,8 +448,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               onPressed: () {
                 final name = nameController.text.trim();
                 if (name.isEmpty) return;
-                
-                final subCategory = SubCategory(name, category.name, category.icon);
+
+                final subCategory = SubCategory(
+                    name, category.name, _getIconByName(category.iconName));
                 if (isExpense) {
                   widget.onAddExpenseSubCategory(subCategory);
                 } else {
@@ -282,14 +465,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
     );
   }
-  
+
   Future<bool> _confirmDeleteCategory(Category category, bool isExpense) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text('Удалить категорию?'),
-          content: Text('${category.name}\nВсе подкатегории также будут удалены.'),
+          content:
+              Text('${category.name}\nВсе подкатегории также будут удалены.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -303,7 +487,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         );
       },
     );
-    
+
     if (result == true) {
       if (isExpense) {
         widget.onDeleteExpenseCategory(category);
@@ -313,8 +497,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
     return result ?? false;
   }
-  
-  Future<bool> _confirmDeleteSubCategory(SubCategory subCategory, bool isExpense) async {
+
+  Future<bool> _confirmDeleteSubCategory(
+      SubCategory subCategory, bool isExpense) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -334,7 +519,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         );
       },
     );
-    
+
     if (result == true) {
       if (isExpense) {
         widget.onDeleteExpenseSubCategory(subCategory);
@@ -344,7 +529,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
     return result ?? false;
   }
-    Widget _buildTransferCategoryList() {
+
+  Widget _buildTransferCategoryList() {
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
@@ -354,7 +540,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             child: ExpansionTile(
               leading: CircleAvatar(
                 backgroundColor: _getColorFromHex(category.color),
-                child: Icon(category.icon, color: Colors.white, size: 20),
+                child: Icon(_getIconByName(category.iconName),
+                    color: Colors.white, size: 20),
               ),
               title: Text(category.name),
               trailing: Row(
@@ -362,7 +549,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.add, color: Colors.teal),
-                    onPressed: () => _showAddTransferSubCategoryDialog(category),
+                    onPressed: () =>
+                        _showAddTransferSubCategoryDialog(category),
                   ),
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.red, size: 20),
@@ -374,13 +562,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             title: Text('Удалить категорию?'),
                             content: Text(category.name),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+                              TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text('Отмена')),
                               ElevatedButton(
                                 onPressed: () {
                                   widget.onDeleteTransferCategory(category);
                                   Navigator.pop(context);
                                 },
-                                child: Text('Удалить', style: TextStyle(color: Colors.red)),
+                                child: Text('Удалить',
+                                    style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           );
@@ -391,7 +582,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ],
               ),
               children: [
-                for (var sub in widget.transferSubCategories.where((s) => s.parentName == category.name))
+                for (var sub in widget.transferSubCategories
+                    .where((s) => s.parentName == category.name))
                   ListTile(
                     leading: Icon(Icons.subdirectory_arrow_right),
                     title: Text(sub.name),
@@ -417,7 +609,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   void _showAddTransferSubCategoryDialog(Category category) {
     final controller = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -428,12 +620,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             decoration: InputDecoration(labelText: 'Название'),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+            TextButton(
+                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
             ElevatedButton(
               onPressed: () {
                 final name = controller.text.trim();
                 if (name.isEmpty) return;
-                widget.onAddTransferSubCategory?.call(SubCategory(name, category.name, category.icon));
+                widget.onAddTransferSubCategory
+                    ?.call(SubCategory(name, category.name, Icons.swap_horiz));
                 Navigator.pop(context);
               },
               child: Text('Сохранить'),
@@ -466,7 +660,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
-                    children: ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#F44336'].map((color) {
+                    children: [
+                      '#2196F3',
+                      '#4CAF50',
+                      '#FF9800',
+                      '#9C27B0',
+                      '#F44336'
+                    ].map((color) {
                       return InkWell(
                         onTap: () {
                           setState(() => selectedColor = color);
@@ -488,12 +688,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Отмена')),
                 ElevatedButton(
                   onPressed: () {
                     final name = nameController.text.trim();
                     if (name.isEmpty) return;
-                    widget.onAddTransferCategory(Category(name, selectedIcon, selectedColor));
+                    widget.onAddTransferCategory(
+                        Category(name, 'swap', selectedColor));
                     Navigator.pop(context);
                   },
                   child: Text('Сохранить'),
@@ -505,7 +708,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
     );
   }
-  
+
   Color _getColorFromHex(String hexColor) {
     hexColor = hexColor.replaceAll('#', '');
     return Color(int.parse('FF$hexColor', radix: 16));

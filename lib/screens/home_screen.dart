@@ -392,18 +392,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (expenseCategories.isEmpty) {
         expenseCategories = [
-          Category('Продукты', Icons.shopping_cart, '#FF5722'),
-          Category('Транспорт', Icons.directions_bus, '#2196F3'),
-          Category('Кафе', Icons.restaurant, '#FF9800'),
-          Category('Жильё', Icons.home, '#9C27B0'),
+          Category('Продукты', 'shopping', '#FF5722'),
+          Category('Транспорт', 'transport', '#2196F3'),
+          Category('Кафе', 'restaurant', '#FF9800'),
+          Category('Жильё', 'home', '#9C27B0'),
         ];
         widget.storageService.saveExpenseCategories(expenseCategories);
       }
 
       if (incomeCategories.isEmpty) {
         incomeCategories = [
-          Category('Зарплата', Icons.work, '#4CAF50'),
-          Category('Подработка', Icons.timer, '#8BC34A'),
+          Category('Зарплата', 'work', '#4CAF50'),
+          Category('Подработка', 'timer', '#8BC34A'),
         ];
         widget.storageService.saveIncomeCategories(incomeCategories);
       }
@@ -415,9 +415,9 @@ class _HomeScreenState extends State<HomeScreen> {
             .toList();
       } else {
         transferCategories = [
-          Category('Перевод на карту', Icons.credit_card, '#2196F3'),
-          Category('Перевод на счёт', Icons.account_balance, '#4CAF50'),
-          Category('Погашение кредита', Icons.payment, '#FF9800'),
+          Category('Перевод на карту', 'card', '#2196F3'),
+          Category('Перевод на счёт', 'bank', '#4CAF50'),
+          Category('Погашение кредита', 'money', '#FF9800'),
         ];
         widget.storageService.setString('transfer_categories',
             jsonEncode(transferCategories.map((c) => c.toJson()).toList()));
@@ -634,6 +634,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 incomeSubCategories: incomeSubCategories,
                                 onAddExpenseCategory: _addExpenseCategory,
                                 onAddIncomeCategory: _addIncomeCategory,
+                                onUpdateExpenseCategory: _updateExpenseCategory,
+                                onUpdateIncomeCategory: _updateIncomeCategory,
                                 onDeleteExpenseCategory: _deleteExpenseCategory,
                                 onDeleteIncomeCategory: _deleteIncomeCategory,
                                 onAddTransferCategory: _addTransferCategory,
@@ -800,12 +802,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 setState(() {
                                   if (isIncome) {
                                     incomeCategories.add(
-                                        Category(value, Icons.work, '#4CAF50'));
+                                        Category(value, 'work', '#4CAF50'));
                                     widget.storageService
                                         .saveIncomeCategories(incomeCategories);
                                   } else {
-                                    expenseCategories.add(Category(
-                                        value, Icons.category, '#607D8B'));
+                                    expenseCategories.add(
+                                        Category(value, 'category', '#607D8B'));
                                     widget.storageService.saveExpenseCategories(
                                         expenseCategories);
                                   }
@@ -945,13 +947,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         selectedCategory!.isNotEmpty) {
                       setState(() {
                         if (isIncome) {
-                          incomeCategories.add(Category(
-                              selectedCategory!, Icons.work, '#4CAF50'));
+                          incomeCategories.add(
+                              Category(selectedCategory!, 'work', '#4CAF50'));
                           widget.storageService
                               .saveIncomeCategories(incomeCategories);
                         } else {
                           expenseCategories.add(Category(
-                              selectedCategory!, Icons.category, '#607D8B'));
+                              selectedCategory!, 'category', '#607D8B'));
                           widget.storageService
                               .saveExpenseCategories(expenseCategories);
                         }
@@ -1319,8 +1321,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .any((c) => c.name == value);
                               if (!exists) {
                                 setState(() {
-                                  transferCategories.add(Category(
-                                      value, Icons.swap_horiz, '#2196F3'));
+                                  transferCategories
+                                      .add(Category(value, 'swap', '#2196F3'));
                                 });
                               }
                               selectedCategory = value;
@@ -1401,8 +1403,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           .any((c) => c.name == selectedCategory);
                       if (!exists) {
                         setState(() {
-                          transferCategories.add(Category(
-                              selectedCategory!, Icons.swap_horiz, '#2196F3'));
+                          transferCategories.add(
+                              Category(selectedCategory!, 'swap', '#2196F3'));
                         });
                       }
                     }
@@ -2004,6 +2006,29 @@ class _HomeScreenState extends State<HomeScreen> {
       expenseCategories.add(c);
       widget.storageService.saveExpenseCategories(expenseCategories);
     });
+    _saveToFirebase();
+  }
+
+  void _updateExpenseCategory(Category oldC, Category newC) {
+    setState(() {
+      final index = expenseCategories.indexWhere((c) => c.name == oldC.name);
+      if (index != -1) {
+        expenseCategories[index] = newC;
+      }
+      widget.storageService.saveExpenseCategories(expenseCategories);
+    });
+    _saveToFirebase();
+  }
+
+  void _updateIncomeCategory(Category oldC, Category newC) {
+    setState(() {
+      final index = incomeCategories.indexWhere((c) => c.name == oldC.name);
+      if (index != -1) {
+        incomeCategories[index] = newC;
+      }
+      widget.storageService.saveIncomeCategories(incomeCategories);
+    });
+    _saveToFirebase();
   }
 
   void _addIncomeCategory(Category c) {
@@ -2011,6 +2036,7 @@ class _HomeScreenState extends State<HomeScreen> {
       incomeCategories.add(c);
       widget.storageService.saveIncomeCategories(incomeCategories);
     });
+    _saveToFirebase();
   }
 
   void _deleteExpenseCategory(Category c) {
@@ -2018,6 +2044,7 @@ class _HomeScreenState extends State<HomeScreen> {
       expenseCategories.removeWhere((x) => x.name == c.name);
       widget.storageService.saveExpenseCategories(expenseCategories);
     });
+    _saveToFirebase();
   }
 
   void _deleteIncomeCategory(Category c) {
@@ -2025,6 +2052,7 @@ class _HomeScreenState extends State<HomeScreen> {
       incomeCategories.removeWhere((x) => x.name == c.name);
       widget.storageService.saveIncomeCategories(incomeCategories);
     });
+    _saveToFirebase();
   }
 
   void _addTransferCategory(Category c) {

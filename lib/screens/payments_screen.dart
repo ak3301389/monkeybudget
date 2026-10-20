@@ -299,7 +299,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 size: 20,
               ),
               title: Text(
-                '${p.dueDate.day}.${p.dueDate.month}.${p.dueDate.year}',
+                '${p.dueDate.day.toString().padLeft(2, '0')}.${p.dueDate.month.toString().padLeft(2, '0')}.${p.dueDate.year}',
                 style: TextStyle(
                   fontWeight: isPaid ? FontWeight.normal : FontWeight.w500,
                   color: isPaid ? Colors.grey : null,
@@ -582,7 +582,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                '${payment.name} — ${payment.dueDate.day}.${payment.dueDate.month}.${payment.dueDate.year}',
+                '${payment.name} — ${payment.dueDate.day.toString().padLeft(2, '0')}.${payment.dueDate.month.toString().padLeft(2, '0')}.${payment.dueDate.year}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -643,7 +643,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         builder: (context) => AlertDialog(
           title: const Text('Удалить платёж?'),
           content: Text('${payment.name} от '
-              '${payment.dueDate.day}.${payment.dueDate.month}.${payment.dueDate.year}'),
+              '${payment.dueDate.day.toString().padLeft(2, '0')}.${payment.dueDate.month.toString().padLeft(2, '0')}.${payment.dueDate.year}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -781,9 +781,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!isPaid &&
-                nextDate != null &&
-                nextDate.isBefore(DateTime.now().add(Duration(days: 1))))
+            if (!isPaid)
               ElevatedButton(
                 onPressed: () => _showPayConfirmation(payment),
                 style: ElevatedButton.styleFrom(
@@ -969,7 +967,9 @@ class _PaymentsScreenState extends State<PaymentsScreen>
               'Со счёта: ${_getAccountName(payment.fromAccountId)}',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            if (!payment.isIncome)
+            if (!payment.isIncome &&
+                payment.toAccountId.isNotEmpty &&
+                payment.fromAccountId != payment.toAccountId)
               Text(
                 'На счёт: ${_getAccountName(payment.toAccountId)}',
                 style: TextStyle(fontSize: 12, color: Colors.grey),

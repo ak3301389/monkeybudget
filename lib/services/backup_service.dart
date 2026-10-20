@@ -39,14 +39,10 @@ class BackupService {
       final data = storageService.exportAllData();
       final parsed = jsonDecode(data);
 
-      final categories = [
-        ...(parsed['expense_categories'] as List? ?? [])
-            .map((c) => c['name'] as String)
-            .toList(),
-        ...(parsed['income_categories'] as List? ?? [])
-            .map((c) => c['name'] as String)
-            .toList(),
-      ];
+      final expenseCategoriesFull =
+          (parsed['expense_categories'] as List? ?? []).toList();
+      final incomeCategoriesFull =
+          (parsed['income_categories'] as List? ?? []).toList();
 
       final syncCode = _generateSyncCode();
 
@@ -59,7 +55,8 @@ class BackupService {
         'syncCode': syncCode,
         'transactions': parsed['transactions'] ?? [],
         'accounts': parsed['accounts'] ?? [],
-        'categories': categories,
+        'expense_categories': expenseCategoriesFull,
+        'income_categories': incomeCategoriesFull,
         'subcategories': parsed['expense_subcategories'] ?? [],
         'payments': parsed['payments'] ?? [],
         'updatedAt': DateTime.now().toIso8601String(),
@@ -133,34 +130,61 @@ class BackupService {
 
         // Categories
         try {
-          final categories = (data['categories'] as List? ?? [])
-              .where((c) => c is String)
-              .map((c) => c.toString())
-              .toList();
-          debugPrint('Categories count: ${categories.length}');
-          if (categories.isNotEmpty) {
-            final expense = categories
-                .where((c) => ![
-                      'Зарплата',
-                      'Подработка',
-                      'Дежурства',
-                      'Подарок'
-                    ].contains(c))
+          // Новый формат: полный список объектов
+          if (data['expense_categories'] != null) {
+            final list = (data['expense_categories'] as List)
+                .where((c) => c is Map)
+                .map((c) =>
+                    models.Category.fromJson(Map<String, dynamic>.from(c)))
                 .toList();
-            final income = categories
-                .where((c) => ['Зарплата', 'Подработка', 'Дежурства', 'Подарок']
-                    .contains(c))
-                .toList();
-
-            if (expense.isNotEmpty) {
-              storageService.saveExpenseCategories(expense
-                  .map((c) => models.Category(c, Icons.category, '#607D8B'))
-                  .toList());
+            if (list.isNotEmpty) {
+              storageService.saveExpenseCategories(list);
             }
-            if (income.isNotEmpty) {
-              storageService.saveIncomeCategories(income
-                  .map((c) => models.Category(c, Icons.work, '#4CAF50'))
-                  .toList());
+          }
+          if (data['income_categories'] != null) {
+            final list = (data['income_categories'] as List)
+                .where((c) => c is Map)
+                .map((c) =>
+                    models.Category.fromJson(Map<String, dynamic>.from(c)))
+                .toList();
+            if (list.isNotEmpty) {
+              storageService.saveIncomeCategories(list);
+            }
+          }
+          // Старый формат (только имена) — оставляем для совместимости
+          if (data['expense_categories'] == null &&
+              data['categories'] != null) {
+            final categories = (data['categories'] as List? ?? [])
+                .where((c) => c is String)
+                .map((c) => c.toString())
+                .toList();
+            if (categories.isNotEmpty) {
+              final expense = categories
+                  .where((c) => ![
+                        'Зарплата',
+                        'Подработка',
+                        'Дежурства',
+                        'Подарок'
+                      ].contains(c))
+                  .toList();
+              final income = categories
+                  .where((c) => [
+                        'Зарплата',
+                        'Подработка',
+                        'Дежурства',
+                        'Подарок'
+                      ].contains(c))
+                  .toList();
+              if (expense.isNotEmpty) {
+                storageService.saveExpenseCategories(expense
+                    .map((c) => models.Category(c, 'category', '#607D8B'))
+                    .toList());
+              }
+              if (income.isNotEmpty) {
+                storageService.saveIncomeCategories(income
+                    .map((c) => models.Category(c, 'work', '#4CAF50'))
+                    .toList());
+              }
             }
           }
         } catch (e) {
