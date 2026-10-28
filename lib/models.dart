@@ -462,6 +462,8 @@ final List<Map<String, String>> bankIcons = [
   {'name': 'Сбер', 'path': 'assets/icons/banks/sber.png'},
   {'name': 'Сбер К', 'path': 'assets/icons/banks/sber_k.png'},
   {'name': 'Альфа', 'path': 'assets/icons/banks/alfa.png'},
+  {'name': 'A70', 'path': 'assets/icons/banks/alfa_70.png'},
+  {'name': 'A90', 'path': 'assets/icons/banks/alfa_90.png'},
   {'name': 'Т-Банк', 'path': 'assets/icons/banks/tbank.png'},
   {'name': 'АТБ', 'path': 'assets/icons/banks/atb.png'},
   {'name': 'Халва', 'path': 'assets/icons/banks/halva.png'},
