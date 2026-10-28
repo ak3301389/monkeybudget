@@ -1013,6 +1013,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
     String frequency = 'monthly';
     int interval = 1;
+    int customInterval = 1;
+    String customUnit = 'months';
     int dayOfWeek = 1;
 
     DateTime startDate = DateTime.now();
@@ -1177,9 +1179,49 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     DropdownMenuItem(
                         value: 'monthly', child: Text('Ежемесячно')),
                     DropdownMenuItem(value: 'yearly', child: Text('Ежегодно')),
+                    DropdownMenuItem(value: 'custom', child: Text('Другое…')),
                   ],
                   onChanged: (value) => setState(() => frequency = value!),
                 ),
+                if (frequency == 'custom') ...[
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Каждые',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (v) => setState(
+                              () => customInterval = int.tryParse(v) ?? 1),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: customUnit,
+                          decoration: InputDecoration(
+                            labelText: 'Единица',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                                value: 'days', child: Text('дней')),
+                            DropdownMenuItem(
+                                value: 'weeks', child: Text('недель')),
+                            DropdownMenuItem(
+                                value: 'months', child: Text('месяцев')),
+                            DropdownMenuItem(
+                                value: 'years', child: Text('лет')),
+                          ],
+                          onChanged: (v) => setState(() => customUnit = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 SizedBox(height: 12),
                 ListTile(
                   title: Text(
@@ -1210,10 +1252,21 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 if (name.isEmpty || amount <= 0 || selectedCategory == null)
                   return;
 
+                final effectiveFrequency = frequency == 'custom'
+                    ? (customUnit == 'days'
+                        ? 'daily'
+                        : customUnit == 'weeks'
+                            ? 'weekly'
+                            : customUnit == 'months'
+                                ? 'monthly'
+                                : 'yearly')
+                    : frequency;
+                final effectiveInterval =
+                    frequency == 'custom' ? customInterval : interval;
                 final schedule = PaymentSchedule.fromPattern(
                   startDate: startDate,
-                  frequency: frequency,
-                  interval: interval,
+                  frequency: effectiveFrequency,
+                  interval: effectiveInterval,
                   dayOfWeek: frequency == 'weekly' ? dayOfWeek : null,
                   count: 12,
                 );
@@ -1249,8 +1302,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     toAccountId: finalToAccountId,
                     dueDate: date,
                     status: 'pending',
-                    frequency: frequency,
-                    interval: interval,
+                    frequency: effectiveFrequency,
+                    interval: effectiveInterval,
                     iconPath: null,
                     color: null,
                   ));

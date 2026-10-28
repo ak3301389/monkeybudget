@@ -63,7 +63,7 @@ class PaymentSchedule {
         final targetDay = dayOfWeek ?? date.weekday;
         var daysUntil = (targetDay - date.weekday) % 7;
         if (daysUntil <= 0) daysUntil += 7;
-        return date.add(Duration(days: daysUntil));
+        return date.add(Duration(days: daysUntil + (interval - 1) * 7));
       case 'biweekly':
         return date.add(Duration(days: 14));
       case 'monthly':
