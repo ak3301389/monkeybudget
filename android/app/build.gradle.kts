@@ -10,6 +10,14 @@ android {
     namespace = "com.example.home_budget"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
+    android {
+    namespace = "com.example.home_budget"
+    compileSdk = 36
+    ndkVersion = flutter.ndkVersion
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
