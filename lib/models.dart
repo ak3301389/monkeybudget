@@ -1,5 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'screens/payment_schedule.dart';
 
 class Account {
   final String id;

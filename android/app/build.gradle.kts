@@ -10,10 +10,7 @@ android {
     namespace = "com.example.home_budget"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
-    android {
-    namespace = "com.example.home_budget"
-    compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+
     lint {
         checkReleaseBuilds = false
         abortOnError = false
@@ -33,7 +30,7 @@ android {
         versionName = flutter.versionName
     }
 
-        signingConfigs {
+    signingConfigs {
         create("release") {
             val keystoreProperties = Properties()
             val keystorePropertiesFile = rootProject.file("key.properties")
@@ -46,6 +43,7 @@ android {
             keyPassword = keystoreProperties.getProperty("keyPassword")
         }
     }
+    
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
@@ -66,4 +64,5 @@ dependencies {
 flutter {
     source = "../.."
 }
+
 apply(plugin = "com.google.gms.google-services")

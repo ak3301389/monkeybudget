@@ -641,7 +641,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void _showAddTransferCategoryDialog() {
     final nameController = TextEditingController();
     String selectedColor = '#2196F3';
-    IconData selectedIcon = Icons.swap_horiz;
 
     showDialog(
       context: context,
