@@ -621,6 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             onAdd: _addPayment,
                             onUpdate: _updatePayment,
                             onDelete: _deletePayment,
+                            onDeleteAll: _deletePayments,
                             onPayNow: _onPayNow,
                             onCancelPayment: _cancelPayment,
                           )
@@ -2136,6 +2137,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void _deletePayment(Payment p) {
     setState(() {
       payments.removeWhere((x) => x.id == p.id);
+      widget.storageService.savePayments(payments);
+    });
+    _saveToFirebase();
+  }
+
+  // ДОБАВИТЬ ВОТ ЭТО:
+  void _deletePayments(List<Payment> list) {
+    final ids = list.map((p) => p.id).toSet();
+    setState(() {
+      payments.removeWhere((x) => ids.contains(x.id));
       widget.storageService.savePayments(payments);
     });
     _saveToFirebase();

@@ -70,11 +70,11 @@ class PaymentSchedule {
         final targetDay = dayOfMonth ?? date.day;
         DateTime next = DateTime(date.year, date.month, targetDay);
         if (!next.isAfter(date)) {
-          next = DateTime(date.year, date.month + 1, targetDay);
+          next = DateTime(date.year, date.month + interval, targetDay);
         }
         return next;
       case 'yearly':
-        return DateTime(date.year + 1, date.month, date.day);
+        return DateTime(date.year + interval, date.month, date.day);
       default:
         return date.add(Duration(days: interval));
     }

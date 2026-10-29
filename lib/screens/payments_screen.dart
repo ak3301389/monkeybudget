@@ -15,6 +15,7 @@ class PaymentsScreen extends StatefulWidget {
   final Function(Payment) onAdd;
   final Function(Payment, Payment) onUpdate;
   final Function(Payment) onDelete;
+  final Function(List<Payment>) onDeleteAll;
   final Function(Payment) onPayNow;
   final Function(Payment) onCancelPayment;
 
@@ -30,6 +31,7 @@ class PaymentsScreen extends StatefulWidget {
     required this.onAdd,
     required this.onUpdate,
     required this.onDelete,
+    required this.onDeleteAll,
     required this.onPayNow,
     required this.onCancelPayment,
   }) : super(key: key);
@@ -366,9 +368,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     );
 
     if (confirmed == true) {
-      for (final p in seriesPayments) {
-        widget.onDelete(p);
-      }
+      widget.onDeleteAll(seriesPayments);
     }
   }
 
@@ -393,6 +393,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     String? selectedSubCategory = first.subCategory;
     String frequency = first.frequency;
     int interval = first.interval;
+    int customInterval = first.interval;
+    String customUnit = 'months';
     DateTime startDate = pendingPayments.first.dueDate;
     int count = pendingPayments.length;
 
@@ -472,9 +474,49 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                         value: 'monthly', child: Text('Каждый месяц')),
                     DropdownMenuItem(
                         value: 'yearly', child: Text('Каждый год')),
+                    DropdownMenuItem(value: 'custom', child: Text('Другое…')),
                   ],
                   onChanged: (v) => setState(() => frequency = v!),
                 ),
+                if (frequency == 'custom') ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Каждые',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (v) => setState(
+                              () => customInterval = int.tryParse(v) ?? 1),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: customUnit,
+                          decoration: const InputDecoration(
+                            labelText: 'Единица',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                                value: 'days', child: Text('дней')),
+                            DropdownMenuItem(
+                                value: 'weeks', child: Text('недель')),
+                            DropdownMenuItem(
+                                value: 'months', child: Text('месяцев')),
+                            DropdownMenuItem(
+                                value: 'years', child: Text('лет')),
+                          ],
+                          onChanged: (v) => setState(() => customUnit = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 12),
                 TextField(
                   keyboardType: TextInputType.number,
@@ -536,15 +578,23 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     if (newName.isEmpty || newAmount <= 0) return;
 
     // 1. Удаляем все pending-платежи
-    for (final p in pendingPayments) {
-      widget.onDelete(p);
-    }
+    widget.onDeleteAll(pendingPayments);
 
     // 2. Генерируем новые по новому шаблону
+    final effectiveFrequency = frequency == 'custom'
+        ? (customUnit == 'days'
+            ? 'daily'
+            : customUnit == 'weeks'
+                ? 'weekly'
+                : customUnit == 'months'
+                    ? 'monthly'
+                    : 'yearly')
+        : frequency;
+    final effectiveInterval = frequency == 'custom' ? customInterval : interval;
     final schedule = PaymentSchedule.fromPattern(
       startDate: startDate,
-      frequency: frequency,
-      interval: interval,
+      frequency: effectiveFrequency,
+      interval: effectiveInterval,
       count: count,
     );
 
@@ -562,8 +612,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         toAccountId: selectedToAccountId,
         dueDate: schedule.dates[i],
         status: 'pending',
-        frequency: frequency,
-        interval: interval,
+        frequency: effectiveFrequency,
+        interval: effectiveInterval,
         iconPath: first.iconPath,
         color: first.color,
       ));
