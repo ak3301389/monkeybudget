@@ -345,26 +345,6 @@ class _HomeScreenState extends State<HomeScreen> {
       expenseSubCategories = widget.storageService.loadExpenseSubCategories();
       incomeSubCategories = widget.storageService.loadIncomeSubCategories();
       payments = widget.storageService.loadPayments();
-
-      // Платежи, у которых наступил срок оплаты — возвращаем в статус pending
-      // (чтобы снова можно было оплатить, если платёж был оплачен заранее)
-      final now = DateTime.now();
-      bool paymentsChanged = false;
-      for (int i = 0; i < payments.length; i++) {
-        final p = payments[i];
-        if (p.status == 'paid' && p.paidAt != null) {
-          if (!p.dueDate.isAfter(now)) {
-            payments[i] = p.copyWith(
-              status: 'pending',
-              paidAt: null,
-            );
-            paymentsChanged = true;
-          }
-        }
-      }
-      if (paymentsChanged) {
-        widget.storageService.savePayments(payments);
-      }
       currency = widget.storageService.getCurrency();
       showNotifications = widget.storageService.getShowNotifications();
       isDarkMode = widget.storageService.getIsDarkMode();
