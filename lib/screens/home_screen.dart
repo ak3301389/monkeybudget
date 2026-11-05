@@ -2419,6 +2419,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // ⭐ СОХРАНЕНИЕ В FIREBASE
   Future<void> _saveToFirebase() async {
     try {
+      // ⏳ Ждём 500 мс, чтобы prefs.setString (savePayments) успел записать 
+      // данные на диск. Иначе Firebase получит СТАРЫЕ данные (где платёж pending).
+      await Future.delayed(const Duration(milliseconds: 500));
+      
       print('📤 Сохраняем в Firebase...');
       await widget.backupService.saveToFirebase();
       print('✅ Успешно сохранено в Firebase!');
