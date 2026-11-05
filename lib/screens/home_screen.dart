@@ -295,39 +295,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 title: Text(p.name),
                 subtitle: Text('${isToday ? 'Сегодня' : 'Завтра'} • $type'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.check_circle, color: Colors.green),
-                      onPressed: () {
-                        _addTransaction(Transaction(
-                          id: DateTime.now().toString(),
-                          amount: p.amount,
-                          category: p.category,
-                          isIncome: p.isIncome,
-                          note: p.name,
-                          date: DateTime.now(),
-                          accountId: p.toAccountId,
-                        ));
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  '✅ ${p.isIncome ? 'Доход добавлен' : 'Платёж проведён'}')),
-                        );
-                      },
-                    ),
-                    Text('${p.amount} $currency',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
+                trailing: Text(
+                  '${p.amount.toStringAsFixed(2)} $currency',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               );
             }).toList(),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text('Позже')),
+                onPressed: () => Navigator.pop(context), child: Text('ОК')),
           ],
         );
       },
