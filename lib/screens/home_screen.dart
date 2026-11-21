@@ -256,6 +256,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     final hasLocalData = transactions.isNotEmpty || payments.isNotEmpty;
+    final hasUnsynced =
+        widget.storageService.getString('has_unsynced_changes') == 'true';
 
     if (!hasLocalData) {
       final restored = await widget.backupService.restoreFromFirebase();
@@ -266,27 +268,19 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final shouldRestore = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Синхронизация с облаком'),
-        content: const Text(
-          'На устройстве уже есть локальные данные. Загрузить копию из облака (локальные изменения будут заменены) или оставить текущие данные?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Оставить локальные'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Загрузить из облака'),
-          ),
-        ],
-      ),
-    );
+    if (hasUnsynced) {
+      await _saveToFirebase();
+      if (mounted) _checkUpcomingPayments();
+      return;
+    }
 
-    if (shouldRestore == true && mounted) {
+    final cloudUpdated = await widget.backupService.getCloudUpdatedAt();
+    final lastSyncStr = widget.storageService.getString('last_sync_at');
+    final lastSync =
+        lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
+
+    if (cloudUpdated != null &&
+        (lastSync == null || cloudUpdated.isAfter(lastSync))) {
       final restored = await widget.backupService.restoreFromFirebase();
       if (restored && mounted) {
         _loadData();
@@ -340,7 +334,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: const Text('ОК')),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ОК')),
           ],
         );
       },
@@ -786,7 +781,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           keyboardType: TextInputType.text,
                           onTap: () {
                             _hideKeyboard();
-                            Future.delayed(const Duration(milliseconds: 50), () {
+                            Future.delayed(const Duration(milliseconds: 50),
+                                () {
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.show');
                             });
@@ -852,7 +848,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             keyboardType: TextInputType.text,
                             onTap: () {
                               _hideKeyboard();
-                              Future.delayed(const Duration(milliseconds: 50), () {
+                              Future.delayed(const Duration(milliseconds: 50),
+                                  () {
                                 SystemChannels.textInput
                                     .invokeMethod('TextInput.show');
                               });
@@ -1104,7 +1101,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Отмена')),
             ElevatedButton(
               onPressed: () async {
                 final qrData = qrController.text.trim();
@@ -1329,7 +1327,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           keyboardType: TextInputType.text,
                           onTap: () {
                             _hideKeyboard();
-                            Future.delayed(const Duration(milliseconds: 50), () {
+                            Future.delayed(const Duration(milliseconds: 50),
+                                () {
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.show');
                             });
@@ -1381,7 +1380,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           keyboardType: TextInputType.text,
                           onTap: () {
                             _hideKeyboard();
-                            Future.delayed(const Duration(milliseconds: 50), () {
+                            Future.delayed(const Duration(milliseconds: 50),
+                                () {
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.show');
                             });
@@ -2477,16 +2477,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ⭐ СОХРАНЕНИЕ В FIREBASE
   Future<void> _saveToFirebase() async {
+    widget.storageService.setString('has_unsynced_changes', 'true');
     try {
-      // ⏳ Ждём 500 мс, чтобы prefs.setString (savePayments) успел записать
-      // данные на диск. Иначе Firebase получит СТАРЫЕ данные (где платёж pending).
       await Future.delayed(const Duration(milliseconds: 500));
 
-      print('📤 Сохраняем в Firebase...');
-      await widget.backupService.saveToFirebase();
-      print('✅ Успешно сохранено в Firebase!');
+      final ok = await widget.backupService.saveToFirebase();
+      if (ok) {
+        widget.storageService.setString('has_unsynced_changes', 'false');
+      }
     } catch (e) {
-      print('❌ Ошибка сохранения в Firebase: $e');
       debugPrint('❌ Ошибка сохранения в Firebase: $e');
     }
   }
@@ -2558,8 +2557,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text('Результат: $result',
-                      style:
-                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
               actions: [

@@ -80,6 +80,7 @@ class BackupService {
           .set(payload);
 
       await _firestore.collection('sync_codes').doc(syncCode).set(payload);
+      storageService.setString('last_sync_at', payload['updatedAt'] as String);
 
       return true;
     } catch (e) {
@@ -132,6 +133,9 @@ class BackupService {
   }
 
   Future<void> _applyCloudData(Map<String, dynamic> data) async {
+    if (data['updatedAt'] != null) {
+      storageService.setString('last_sync_at', data['updatedAt'].toString());
+    }
     try {
       final accounts = (data['accounts'] as List? ?? []);
       if (accounts.isNotEmpty) {
@@ -322,6 +326,32 @@ class BackupService {
       }
       return null;
     } catch (e) {
+      return null;
+    }
+  }
+
+  Future<DateTime?> getCloudUpdatedAt() async {
+    try {
+      final savedCode = storageService.getString('sync_code');
+      if (savedCode != null && savedCode.isNotEmpty) {
+        final codeDoc =
+            await _firestore.collection('sync_codes').doc(savedCode).get();
+        if (codeDoc.exists && codeDoc.data()?['updatedAt'] != null) {
+          return DateTime.tryParse(codeDoc.data()!['updatedAt'].toString());
+        }
+      }
+
+      final doc = await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('data')
+          .doc('backup')
+          .get();
+      if (doc.exists && doc.data()?['updatedAt'] != null) {
+        return DateTime.tryParse(doc.data()!['updatedAt'].toString());
+      }
+      return null;
+    } catch (_) {
       return null;
     }
   }
