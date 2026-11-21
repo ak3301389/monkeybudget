@@ -199,3 +199,4 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 >>>>>>> f3c616e637eb03d3f23a4796d3c66e91bb261bde
+lib/config.dart
