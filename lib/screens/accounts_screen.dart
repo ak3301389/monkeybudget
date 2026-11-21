@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:ui';
@@ -15,7 +15,7 @@ class AccountsScreen extends StatefulWidget {
   final List<Map<String, dynamic>> accountIcons;
 
   const AccountsScreen({
-    Key? key,
+    super.key,
     required this.accounts,
     required this.currency,
     required this.onAddAccount,
@@ -25,7 +25,7 @@ class AccountsScreen extends StatefulWidget {
     required this.onReorderAccounts,
     required this.accountColors,
     required this.accountIcons,
-  }) : super(key: key);
+  });
 
   @override
   _AccountsScreenState createState() => _AccountsScreenState();
@@ -39,47 +39,47 @@ class _AccountsScreenState extends State<AccountsScreen> {
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return ReorderableListView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       header: Column(
         children: [
           Row(
             children: [
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.teal.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
+                        Colors.teal.withValues(alpha: 0.7),
+                        Colors.blue.withValues(alpha: 0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.teal.withOpacity(0.3),
+                        color: Colors.teal.withValues(alpha: 0.3),
                         blurRadius: 10,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.account_balance_wallet,
+                      const Icon(Icons.account_balance_wallet,
                           color: Colors.white, size: 28),
-                      SizedBox(height: 8),
-                      Text('Дебетовые и наличка',
+                      const SizedBox(height: 8),
+                      const Text('Дебетовые и наличка',
                           style:
                               TextStyle(color: Colors.white70, fontSize: 12)),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         '${_getDebitTotal().toStringAsFixed(0)} ${widget.currency}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold),
@@ -88,42 +88,42 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   ),
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.red.withOpacity(0.7),
-                        Colors.deepOrange.withOpacity(0.7),
+                        Colors.red.withValues(alpha: 0.7),
+                        Colors.deepOrange.withValues(alpha: 0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
+                        color: Colors.red.withValues(alpha: 0.3),
                         blurRadius: 10,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.credit_card, color: Colors.white, size: 28),
-                      SizedBox(height: 8),
-                      Text('Долг по кредиткам',
+                      const Icon(Icons.credit_card, color: Colors.white, size: 28),
+                      const SizedBox(height: 8),
+                      const Text('Долг по кредиткам',
                           style:
                               TextStyle(color: Colors.white70, fontSize: 12)),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         '${_getCreditDebt().toStringAsFixed(0)} ${widget.currency}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold),
@@ -134,19 +134,19 @@ class _AccountsScreenState extends State<AccountsScreen> {
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Мои счета',
+              const Text('Мои счета',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               IconButton(
-                icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
+                icon: const Icon(Icons.add_circle, color: Colors.teal, size: 30),
                 onPressed: _showAddDialog,
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
         ],
       ),
       onReorder: (oldIndex, newIndex) {
@@ -174,24 +174,24 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Widget _buildAccountCard(Account account, int index) {
     return Card(
       key: ValueKey(account.id),
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () => widget.onEditAccount(account),
         onLongPress: () => _showAccountMenu(account),
         child: Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                _getColorFromHex(account.color).withOpacity(0.7),
-                _getColorFromHex(account.color).withOpacity(0.7),
+                _getColorFromHex(account.color).withValues(alpha: 0.7),
+                _getColorFromHex(account.color).withValues(alpha: 0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
@@ -201,7 +201,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   ? Container(
                       width: 45,
                       height: 45,
-                      padding: EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
@@ -213,7 +213,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       width: 45,
                       height: 45,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -222,28 +222,28 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         size: 26,
                       ),
                     ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       account.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold),
                     ),
                     if (account.bank.isNotEmpty)
                       Text(account.bank,
-                          style: TextStyle(color: Colors.white70)),
+                          style: const TextStyle(color: Colors.white70)),
                     if (account.cardNumber.isNotEmpty)
                       Text(account.cardNumber,
-                          style: TextStyle(color: Colors.white70)),
-                    SizedBox(height: 16),
+                          style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 16),
                     Text(
                       '${account.balance.toStringAsFixed(2)} ${widget.currency}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
                           fontWeight: FontWeight.bold),
@@ -251,11 +251,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     if (account.type == 'credit') ...[
                       Text(
                         'Лимит: ${account.creditLimit.toStringAsFixed(0)} ${widget.currency}',
-                        style: TextStyle(color: Colors.white70),
+                        style: const TextStyle(color: Colors.white70),
                       ),
                       Text(
                         'Долг: ${(account.creditLimit - account.balance).toStringAsFixed(2)} ${widget.currency}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.white70, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -265,7 +265,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               if (!kIsWeb)
                 ReorderableDragStartListener(
                   index: index,
-                  child: Icon(
+                  child: const Icon(
                     Icons.drag_handle,
                     color: Colors.white70,
                     size: 28,
@@ -287,24 +287,24 @@ class _AccountsScreenState extends State<AccountsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Text(
                   account.name,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-              Divider(height: 1),
+              const Divider(height: 1),
               ListTile(
-                leading: Icon(Icons.edit, color: Colors.blue),
-                title: Text('Редактировать'),
+                leading: const Icon(Icons.edit, color: Colors.blue),
+                title: const Text('Редактировать'),
                 onTap: () {
                   Navigator.pop(context);
                   widget.onEditAccount(account);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.delete, color: Colors.red),
-                title: Text('Удалить'),
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Удалить'),
                 onTap: () async {
                   Navigator.pop(context);
                   final confirmed = await _confirmDelete(account);
@@ -313,7 +313,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   }
                 },
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
             ],
           ),
         );
@@ -326,17 +326,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Удалить счёт?'),
+          title: const Text('Удалить счёт?'),
           content: Text(
               '${account.name}\nВсе связанные операции также будут удалены.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Удалить', style: TextStyle(color: Colors.red)),
+              child: const Text('Удалить', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -359,13 +359,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Добавить счёт'),
+              title: const Text('Добавить счёт'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SegmentedButton(
-                      segments: [
+                      segments: const [
                         ButtonSegment(
                             value: 'cash',
                             label: Text('Наличные'),
@@ -386,32 +386,32 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         });
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                           labelText: 'Название счёта',
                           border: OutlineInputBorder()),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     if (accountType != 'cash')
                       TextField(
                         controller: bankController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                             labelText: 'Банк', border: OutlineInputBorder()),
                       ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: balanceController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Начальный баланс',
                         prefixText: '${widget.currency} ',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 16),
-                    Text('Цвет:',
+                    const SizedBox(height: 16),
+                    const Text('Цвет:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -436,8 +436,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Иконка:',
+                    const SizedBox(height: 16),
+                    const Text('Иконка:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -476,7 +476,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -496,7 +496,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     ));
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );

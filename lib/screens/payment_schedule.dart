@@ -65,7 +65,7 @@ class PaymentSchedule {
         if (daysUntil <= 0) daysUntil += 7;
         return date.add(Duration(days: daysUntil + (interval - 1) * 7));
       case 'biweekly':
-        return date.add(Duration(days: 14));
+        return date.add(const Duration(days: 14));
       case 'monthly':
         final targetDay = dayOfMonth ?? date.day;
         DateTime next = DateTime(date.year, date.month, targetDay);

@@ -1,8 +1,9 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models.dart' as models;
 import 'storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,21 +16,24 @@ class BackupService {
 
   BackupService(this.storageService);
 
-  // Сохранение на телефон
   Future<String> saveToPhone() async {
+    final data = storageService.exportAllData();
+    final fileName = 'backup_${DateTime.now().millisecondsSinceEpoch}.json';
+
     try {
-      final data = storageService.exportAllData();
       final downloadsDir = Directory('/storage/emulated/0/Download');
       if (!await downloadsDir.exists()) {
         await downloadsDir.create(recursive: true);
       }
-      final fileName = 'backup_${DateTime.now().millisecondsSinceEpoch}.json';
       final file = File('${downloadsDir.path}/$fileName');
       await file.writeAsString(data);
       return file.path;
-    } catch (e) {
-      debugPrint('Save to phone error: $e');
-      return '';
+    } catch (_) {
+      final extDir = await getExternalStorageDirectory();
+      final fallbackDir = extDir ?? await getApplicationDocumentsDirectory();
+      final file = File('${fallbackDir.path}/$fileName');
+      await file.writeAsString(data);
+      return file.path;
     }
   }
 
@@ -43,24 +47,39 @@ class BackupService {
           (parsed['expense_categories'] as List? ?? []).toList();
       final incomeCategoriesFull =
           (parsed['income_categories'] as List? ?? []).toList();
+      final transferCategoriesFull =
+          (parsed['transfer_categories'] as List? ?? []).toList();
 
-      final syncCode = _generateSyncCode();
+      String? syncCode = storageService.getString('sync_code');
+      if (syncCode == null || syncCode.isEmpty) {
+        syncCode = _generateSyncCode();
+        storageService.setString('sync_code', syncCode);
+      }
+
+      final payload = {
+        'syncCode': syncCode,
+        'ownerId': _userId,
+        'transactions': parsed['transactions'] ?? [],
+        'accounts': parsed['accounts'] ?? [],
+        'expense_categories': expenseCategoriesFull,
+        'income_categories': incomeCategoriesFull,
+        'transfer_categories': transferCategoriesFull,
+        'subcategories': parsed['expense_subcategories'] ?? [],
+        'expense_subcategories': parsed['expense_subcategories'] ?? [],
+        'income_subcategories': parsed['income_subcategories'] ?? [],
+        'transfer_subcategories': parsed['transfer_subcategories'] ?? [],
+        'payments': parsed['payments'] ?? [],
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
 
       await _firestore
           .collection('users')
           .doc(_userId)
           .collection('data')
           .doc('backup')
-          .set({
-        'syncCode': syncCode,
-        'transactions': parsed['transactions'] ?? [],
-        'accounts': parsed['accounts'] ?? [],
-        'expense_categories': expenseCategoriesFull,
-        'income_categories': incomeCategoriesFull,
-        'subcategories': parsed['expense_subcategories'] ?? [],
-        'payments': parsed['payments'] ?? [],
-        'updatedAt': DateTime.now().toIso8601String(),
-      });
+          .set(payload);
+
+      await _firestore.collection('sync_codes').doc(syncCode).set(payload);
 
       return true;
     } catch (e) {
@@ -81,9 +100,18 @@ class BackupService {
     return '$part1-$part2-$part3';
   }
 
-  // Загрузка из Firebase
   Future<bool> restoreFromFirebase() async {
     try {
+      final savedCode = storageService.getString('sync_code');
+      if (savedCode != null && savedCode.isNotEmpty) {
+        final codeDoc =
+            await _firestore.collection('sync_codes').doc(savedCode).get();
+        if (codeDoc.exists) {
+          await _applyCloudData(codeDoc.data()!);
+          return true;
+        }
+      }
+
       final doc = await _firestore
           .collection('users')
           .doc(_userId)
@@ -92,138 +120,7 @@ class BackupService {
           .get();
 
       if (doc.exists) {
-        final data = doc.data()!;
-
-        debugPrint('=== RESTORE DEBUG ===');
-
-        // Accounts
-        try {
-          final accounts = (data['accounts'] as List? ?? []);
-          debugPrint('Accounts count: ${accounts.length}');
-          if (accounts.isNotEmpty) {
-            final list = accounts
-                .where((a) => a is Map)
-                .map((a) =>
-                    models.Account.fromJson(Map<String, dynamic>.from(a)))
-                .toList();
-            storageService.saveAccounts(list);
-          }
-        } catch (e) {
-          debugPrint('Accounts error: $e');
-        }
-
-        // Transactions
-        try {
-          final transactions = (data['transactions'] as List? ?? []);
-          debugPrint('Transactions count: ${transactions.length}');
-          if (transactions.isNotEmpty) {
-            final list = transactions
-                .where((t) => t is Map)
-                .map((t) =>
-                    models.Transaction.fromJson(Map<String, dynamic>.from(t)))
-                .toList();
-            storageService.saveTransactions(list);
-          }
-        } catch (e) {
-          debugPrint('Transactions error: $e');
-        }
-
-        // Categories
-        try {
-          // Новый формат: полный список объектов
-          if (data['expense_categories'] != null) {
-            final list = (data['expense_categories'] as List)
-                .where((c) => c is Map)
-                .map((c) =>
-                    models.Category.fromJson(Map<String, dynamic>.from(c)))
-                .toList();
-            if (list.isNotEmpty) {
-              storageService.saveExpenseCategories(list);
-            }
-          }
-          if (data['income_categories'] != null) {
-            final list = (data['income_categories'] as List)
-                .where((c) => c is Map)
-                .map((c) =>
-                    models.Category.fromJson(Map<String, dynamic>.from(c)))
-                .toList();
-            if (list.isNotEmpty) {
-              storageService.saveIncomeCategories(list);
-            }
-          }
-          // Старый формат (только имена) — оставляем для совместимости
-          if (data['expense_categories'] == null &&
-              data['categories'] != null) {
-            final categories = (data['categories'] as List? ?? [])
-                .where((c) => c is String)
-                .map((c) => c.toString())
-                .toList();
-            if (categories.isNotEmpty) {
-              final expense = categories
-                  .where((c) => ![
-                        'Зарплата',
-                        'Подработка',
-                        'Дежурства',
-                        'Подарок'
-                      ].contains(c))
-                  .toList();
-              final income = categories
-                  .where((c) => [
-                        'Зарплата',
-                        'Подработка',
-                        'Дежурства',
-                        'Подарок'
-                      ].contains(c))
-                  .toList();
-              if (expense.isNotEmpty) {
-                storageService.saveExpenseCategories(expense
-                    .map((c) => models.Category(c, 'category', '#607D8B'))
-                    .toList());
-              }
-              if (income.isNotEmpty) {
-                storageService.saveIncomeCategories(income
-                    .map((c) => models.Category(c, 'work', '#4CAF50'))
-                    .toList());
-              }
-            }
-          }
-        } catch (e) {
-          debugPrint('Categories error: $e');
-        }
-
-        // Subcategories
-        try {
-          final subcategories = (data['subcategories'] as List? ?? []);
-          debugPrint('Subcategories count: ${subcategories.length}');
-          if (subcategories.isNotEmpty) {
-            final list = subcategories
-                .where((s) => s is Map)
-                .map((s) =>
-                    models.SubCategory.fromJson(Map<String, dynamic>.from(s)))
-                .toList();
-            storageService.saveExpenseSubCategories(list);
-          }
-        } catch (e) {
-          debugPrint('Subcategories error: $e');
-        }
-
-        // ===== ЗАГРУЗКА ПЛАТЕЖЕЙ =====
-        try {
-          final payments = (data['payments'] as List? ?? []);
-          debugPrint('Payments count: ${payments.length}');
-          if (payments.isNotEmpty) {
-            final list = payments
-                .where((p) => p is Map)
-                .map((p) =>
-                    models.Payment.fromJson(Map<String, dynamic>.from(p)))
-                .toList();
-            storageService.savePayments(list);
-          }
-        } catch (e) {
-          debugPrint('Payments error: $e');
-        }
-        // ===== КОНЕЦ НОВОГО =====
-
+        await _applyCloudData(doc.data()!);
         return true;
       }
 
@@ -234,22 +131,154 @@ class BackupService {
     }
   }
 
+  Future<void> _applyCloudData(Map<String, dynamic> data) async {
+    try {
+      final accounts = (data['accounts'] as List? ?? []);
+      if (accounts.isNotEmpty) {
+        final list = accounts
+            .whereType<Map>()
+            .map((a) => models.Account.fromJson(Map<String, dynamic>.from(a)))
+            .toList();
+        storageService.saveAccounts(list);
+      }
+    } catch (e) {
+      debugPrint('Accounts error: $e');
+    }
+
+    try {
+      final transactions = (data['transactions'] as List? ?? []);
+      if (transactions.isNotEmpty) {
+        final list = transactions
+            .whereType<Map>()
+            .map((t) =>
+                models.Transaction.fromJson(Map<String, dynamic>.from(t)))
+            .toList();
+        storageService.saveTransactions(list);
+      }
+    } catch (e) {
+      debugPrint('Transactions error: $e');
+    }
+
+    try {
+      if (data['expense_categories'] != null) {
+        final list = (data['expense_categories'] as List)
+            .whereType<Map>()
+            .map((c) => models.Category.fromJson(Map<String, dynamic>.from(c)))
+            .toList();
+        if (list.isNotEmpty) {
+          storageService.saveExpenseCategories(list);
+        }
+      }
+      if (data['income_categories'] != null) {
+        final list = (data['income_categories'] as List)
+            .whereType<Map>()
+            .map((c) => models.Category.fromJson(Map<String, dynamic>.from(c)))
+            .toList();
+        if (list.isNotEmpty) {
+          storageService.saveIncomeCategories(list);
+        }
+      }
+      if (data['transfer_categories'] != null) {
+        final list = (data['transfer_categories'] as List)
+            .whereType<Map>()
+            .map((c) => models.Category.fromJson(Map<String, dynamic>.from(c)))
+            .toList();
+        if (list.isNotEmpty) {
+          storageService.setString('transfer_categories',
+              jsonEncode(list.map((c) => c.toJson()).toList()));
+        }
+      }
+      if (data['expense_categories'] == null && data['categories'] != null) {
+        final categories = (data['categories'] as List? ?? [])
+            .whereType<String>()
+            .map((c) => c.toString())
+            .toList();
+        if (categories.isNotEmpty) {
+          final expense = categories
+              .where((c) => !['Зарплата', 'Подработка', 'Дежурства', 'Подарок']
+                  .contains(c))
+              .toList();
+          final income = categories
+              .where((c) => ['Зарплата', 'Подработка', 'Дежурства', 'Подарок']
+                  .contains(c))
+              .toList();
+          if (expense.isNotEmpty) {
+            storageService.saveExpenseCategories(expense
+                .map((c) => models.Category(c, 'category', '#607D8B'))
+                .toList());
+          }
+          if (income.isNotEmpty) {
+            storageService.saveIncomeCategories(income
+                .map((c) => models.Category(c, 'work', '#4CAF50'))
+                .toList());
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Categories error: $e');
+    }
+
+    try {
+      final expenseSubsRaw =
+          (data['expense_subcategories'] ?? data['subcategories']) as List? ??
+              [];
+      if (expenseSubsRaw.isNotEmpty) {
+        final list = expenseSubsRaw
+            .whereType<Map>()
+            .map((s) =>
+                models.SubCategory.fromJson(Map<String, dynamic>.from(s)))
+            .toList();
+        storageService.saveExpenseSubCategories(list);
+      }
+
+      final incomeSubsRaw = (data['income_subcategories'] as List? ?? []);
+      if (incomeSubsRaw.isNotEmpty) {
+        final list = incomeSubsRaw
+            .whereType<Map>()
+            .map((s) =>
+                models.SubCategory.fromJson(Map<String, dynamic>.from(s)))
+            .toList();
+        storageService.saveIncomeSubCategories(list);
+      }
+
+      final transferSubsRaw = (data['transfer_subcategories'] as List? ?? []);
+      if (transferSubsRaw.isNotEmpty) {
+        final list = transferSubsRaw
+            .whereType<Map>()
+            .map((s) =>
+                models.SubCategory.fromJson(Map<String, dynamic>.from(s)))
+            .toList();
+        storageService.setString('transfer_subcategories',
+            jsonEncode(list.map((s) => s.toJson()).toList()));
+      }
+    } catch (e) {
+      debugPrint('Subcategories error: $e');
+    }
+
+    try {
+      final payments = (data['payments'] as List? ?? []);
+      if (payments.isNotEmpty) {
+        final list = payments
+            .whereType<Map>()
+            .map((p) => models.Payment.fromJson(Map<String, dynamic>.from(p)))
+            .toList();
+        storageService.savePayments(list);
+      }
+    } catch (e) {
+      debugPrint('Payments error: $e');
+    }
+  }
+
   Future<bool> restoreByCode(String code) async {
     try {
-      final doc = await _firestore
-          .collection('users')
-          .doc(_userId)
-          .collection('data')
-          .doc('backup')
-          .get();
+      final cleanCode = code.trim().toUpperCase();
+      final doc =
+          await _firestore.collection('sync_codes').doc(cleanCode).get();
 
       if (doc.exists) {
-        final data = doc.data()!;
-        final storedCode = data['syncCode'] as String?;
-
-        if (storedCode == code) {
-          return await restoreFromFirebase();
-        }
+        storageService.setString('sync_code', cleanCode);
+        await _applyCloudData(doc.data()!);
+        return true;
       }
 
       return false;
@@ -259,7 +288,6 @@ class BackupService {
     }
   }
 
-  // Восстановление из файла
   Future<bool> restoreFromFile(String filePath) async {
     try {
       final file = File(filePath);
@@ -274,6 +302,10 @@ class BackupService {
   }
 
   Future<String?> getSyncCode() async {
+    final localCode = storageService.getString('sync_code');
+    if (localCode != null && localCode.isNotEmpty) {
+      return localCode;
+    }
     try {
       final doc = await _firestore
           .collection('users')
@@ -282,7 +314,11 @@ class BackupService {
           .doc('backup')
           .get();
       if (doc.exists) {
-        return doc.data()!['syncCode'] as String?;
+        final code = doc.data()!['syncCode'] as String?;
+        if (code != null && code.isNotEmpty) {
+          storageService.setString('sync_code', code);
+        }
+        return code;
       }
       return null;
     } catch (e) {

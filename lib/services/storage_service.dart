@@ -1,5 +1,4 @@
-﻿import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models.dart';
 
@@ -129,6 +128,9 @@ class StorageService {
 
   // Полный экспорт данных
   String exportAllData() {
+    final transferCatsJson = getString('transfer_categories');
+    final transferSubsJson = getString('transfer_subcategories');
+
     final data = {
       'accounts': loadAccounts().map((a) => a.toJson()).toList(),
       'transactions': loadTransactions().map((t) => t.toJson()).toList(),
@@ -136,10 +138,14 @@ class StorageService {
           loadExpenseCategories().map((c) => c.toJson()).toList(),
       'income_categories':
           loadIncomeCategories().map((c) => c.toJson()).toList(),
+      'transfer_categories':
+          transferCatsJson != null ? jsonDecode(transferCatsJson) : [],
       'expense_subcategories':
           loadExpenseSubCategories().map((s) => s.toJson()).toList(),
       'income_subcategories':
           loadIncomeSubCategories().map((s) => s.toJson()).toList(),
+      'transfer_subcategories':
+          transferSubsJson != null ? jsonDecode(transferSubsJson) : [],
       'recurring_payments':
           loadRecurringPayments().map((p) => p.toJson()).toList(),
       'payments': loadPayments().map((p) => p.toJson()).toList(),
@@ -185,8 +191,9 @@ class StorageService {
           .map((c) => Category(c, 'work', '#4CAF50'))
           .toList();
 
-      if (expenseCategories.isNotEmpty)
+      if (expenseCategories.isNotEmpty) {
         saveExpenseCategories(expenseCategories);
+      }
       if (incomeCategories.isNotEmpty) saveIncomeCategories(incomeCategories);
     }
 
@@ -213,6 +220,15 @@ class StorageService {
       saveIncomeSubCategories((data['income_subcategories'] as List)
           .map((s) => SubCategory.fromJson(s))
           .toList());
+    }
+
+    if (data['transfer_categories'] != null) {
+      setString('transfer_categories', jsonEncode(data['transfer_categories']));
+    }
+
+    if (data['transfer_subcategories'] != null) {
+      setString(
+          'transfer_subcategories', jsonEncode(data['transfer_subcategories']));
     }
 
     // Общий формат recurring
@@ -256,8 +272,9 @@ class StorageService {
     if (data['settings'] != null) {
       final settings = data['settings'];
       if (settings['currency'] != null) setCurrency(settings['currency']);
-      if (settings['showNotifications'] != null)
+      if (settings['showNotifications'] != null) {
         setShowNotifications(settings['showNotifications']);
+      }
       if (settings['isDarkMode'] != null) setIsDarkMode(settings['isDarkMode']);
     }
   }

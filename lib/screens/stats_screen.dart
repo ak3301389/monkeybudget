@@ -7,11 +7,11 @@ class StatsScreen extends StatefulWidget {
   final String currency;
 
   const StatsScreen({
-    Key? key,
+    super.key,
     required this.transactions,
     required this.accounts,
     required this.currency,
-  }) : super(key: key);
+  });
 
   @override
   _StatsScreenState createState() => _StatsScreenState();
@@ -79,54 +79,54 @@ class _StatsScreenState extends State<StatsScreen> {
     final creditAccounts = widget.accounts.where((a) => a.type == 'credit').toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Статистика')),
+      appBar: AppBar(title: const Text('Статистика')),
       body: ListView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         children: [
           // ==== Фильтр по дате ====
           _buildFilterBar(),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // ==== Доходы / Расходы ====
           Card(
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Column(
                     children: [
-                      Icon(Icons.arrow_downward, color: Colors.green),
-                      Text('Доходы'),
+                      const Icon(Icons.arrow_downward, color: Colors.green),
+                      const Text('Доходы'),
                       Text('${totalIncome.toStringAsFixed(2)} $currency',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
                     ],
                   ),
                   Column(
                     children: [
-                      Icon(Icons.arrow_upward, color: Colors.red),
-                      Text('Расходы'),
+                      const Icon(Icons.arrow_upward, color: Colors.red),
+                      const Text('Расходы'),
                       Text('${totalExpense.toStringAsFixed(2)} $currency',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // ==== Расходы по категориям ====
           if (sortedExpenses.isNotEmpty)
             Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Расходы по категориям',
+                    const Text('Расходы по категориям',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     for (int i = 0; i < sortedExpenses.length; i++)
                       _buildCategoryTile(
                         category: sortedExpenses[i].key,
@@ -140,19 +140,19 @@ class _StatsScreenState extends State<StatsScreen> {
               ),
             ),
 
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // ==== Доходы по категориям ====
           if (sortedIncomes.isNotEmpty)
             Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Доходы по категориям',
+                    const Text('Доходы по категориям',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     for (int i = 0; i < sortedIncomes.length; i++)
                       _buildCategoryTile(
                         category: sortedIncomes[i].key,
@@ -166,18 +166,18 @@ class _StatsScreenState extends State<StatsScreen> {
               ),
             ),
 
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // ==== Обычные счета ====
           if (regularAccounts.isNotEmpty)
             Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Счета', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
+                    const Text('Счета', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
                     for (var account in regularAccounts)
                       ListTile(
                         leading: Icon(_getAccountIcon(account.icon)),
@@ -195,22 +195,22 @@ class _StatsScreenState extends State<StatsScreen> {
               ),
             ),
 
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // ==== Кредитные карты ====
           if (creditAccounts.isNotEmpty)
             Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Кредитные карты',
+                    const Text('Кредитные карты',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     for (var account in creditAccounts)
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -218,27 +218,27 @@ class _StatsScreenState extends State<StatsScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(account.name,
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                                 Text('${account.balance.toStringAsFixed(2)} $currency',
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: account.balance >= 0 ? Colors.green : Colors.red)),
                               ],
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Долг:',
+                                const Text('Долг:',
                                     style: TextStyle(fontSize: 12, color: Colors.grey)),
                                 Text('${(account.creditLimit - account.balance).toStringAsFixed(2)} $currency',
-                                    style: TextStyle(fontSize: 12, color: Colors.red)),
+                                    style: const TextStyle(fontSize: 12, color: Colors.red)),
                               ],
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Лимит:',
+                                const Text('Лимит:',
                                     style: TextStyle(fontSize: 12, color: Colors.grey)),
                                 Text('${account.creditLimit.toStringAsFixed(2)} $currency',
                                     style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
@@ -252,7 +252,7 @@ class _StatsScreenState extends State<StatsScreen> {
               ),
             ),
 
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -265,19 +265,19 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildFilterBar() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             Row(
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _filterType,
-                    decoration: InputDecoration(
+                    initialValue: _filterType,
+                    decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                    items: [
+                    items: const [
                       DropdownMenuItem(value: 'month', child: Text('Этот месяц')),
                       DropdownMenuItem(value: 'lastMonth', child: Text('Прошлый месяц')),
                       DropdownMenuItem(value: 'year', child: Text('Этот год')),
@@ -298,20 +298,20 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
             if (_filterType == 'custom' && _customStart != null && _customEnd != null)
               Padding(
-                padding: EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                    SizedBox(width: 4),
+                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
                     Text(
                       '${_customStart!.day}.${_customStart!.month}.${_customStart!.year} — '
                       '${_customEnd!.day}.${_customEnd!.month}.${_customEnd!.year}',
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     TextButton(
                       onPressed: _selectCustomPeriod,
-                      child: Text('Изменить'),
+                      child: const Text('Изменить'),
                     ),
                   ],
                 ),
@@ -424,7 +424,7 @@ class _StatsScreenState extends State<StatsScreen> {
             });
           },
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
                 Icon(
@@ -432,11 +432,11 @@ class _StatsScreenState extends State<StatsScreen> {
                   size: 20,
                   color: Colors.grey.shade600,
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     category,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
                 Text(
@@ -449,26 +449,26 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         if (isExpanded)
           Padding(
-            padding: EdgeInsets.only(left: 24, bottom: 8),
+            padding: const EdgeInsets.only(left: 24, bottom: 8),
             child: Column(
               children: [
                 for (var sub in sortedSubs)
                   Padding(
-                    padding: EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(sub.key, style: TextStyle(fontSize: 13)),
+                            Text(sub.key, style: const TextStyle(fontSize: 13)),
                             Text(
                               '${sub.value.toStringAsFixed(2)} $currency',
                               style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                             ),
                           ],
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Stack(
                           children: [
                             Container(
@@ -483,7 +483,7 @@ class _StatsScreenState extends State<StatsScreen> {
                               child: Container(
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(0.7),
+                                  color: color.withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -496,7 +496,7 @@ class _StatsScreenState extends State<StatsScreen> {
               ],
             ),
           ),
-        Divider(height: 1),
+        const Divider(height: 1),
       ],
     );
   }

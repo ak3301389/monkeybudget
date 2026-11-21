@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models.dart';
 
 class CategoriesScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class CategoriesScreen extends StatefulWidget {
   final List<Map<String, dynamic>> categoryIcons;
 
   const CategoriesScreen({
-    Key? key,
+    super.key,
     required this.expenseCategories,
     required this.incomeCategories,
     required this.transferCategories,
@@ -47,7 +47,7 @@ class CategoriesScreen extends StatefulWidget {
     required this.onDeleteExpenseSubCategory,
     required this.onDeleteIncomeSubCategory,
     required this.categoryIcons,
-  }) : super(key: key);
+  });
 
   @override
   _CategoriesScreenState createState() => _CategoriesScreenState();
@@ -70,7 +70,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       child: Column(
         children: [
           TabBar(
-            tabs: [
+            tabs: const [
               Tab(text: 'Расходы'),
               Tab(text: 'Доходы'),
               Tab(text: 'Переводы'),
@@ -100,11 +100,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget _buildCategoryList(List<Category> categories,
       List<SubCategory> subCategories, bool isExpense) {
     return ListView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       children: [
         for (var category in categories)
           Card(
-            margin: EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: 8),
             child: ExpansionTile(
               leading: CircleAvatar(
                 backgroundColor: _getColorFromHex(category.color),
@@ -119,12 +119,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.add, color: Colors.teal),
+                    icon: const Icon(Icons.add, color: Colors.teal),
                     onPressed: () =>
                         _showAddSubCategoryDialog(category, isExpense),
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red, size: 20),
+                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                     onPressed: () =>
                         _confirmDeleteCategory(category, isExpense),
                   ),
@@ -136,13 +136,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   ListTile(
                     leading: CircleAvatar(
                       backgroundColor:
-                          _getColorFromHex(category.color).withOpacity(0.3),
+                          _getColorFromHex(category.color).withValues(alpha: 0.3),
                       child: Icon(sub.icon,
                           size: 16, color: _getColorFromHex(category.color)),
                     ),
                     title: Text(sub.name),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red, size: 18),
+                      icon: const Icon(Icons.delete, color: Colors.red, size: 18),
                       onPressed: () =>
                           _confirmDeleteSubCategory(sub, isExpense),
                     ),
@@ -150,11 +150,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ],
             ),
           ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: () => _showAddCategoryDialog(isExpense),
-          icon: Icon(Icons.add),
-          label: Text('Добавить категорию'),
+          icon: const Icon(Icons.add),
+          label: const Text('Добавить категорию'),
         ),
       ],
     );
@@ -171,18 +171,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Новая категория'),
+              title: const Text('Новая категория'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                           labelText: 'Название', border: OutlineInputBorder()),
                     ),
-                    SizedBox(height: 16),
-                    Text('Иконка:',
+                    const SizedBox(height: 16),
+                    const Text('Иконка:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -218,8 +218,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Цвет:',
+                    const SizedBox(height: 16),
+                    const Text('Цвет:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -267,7 +267,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -283,7 +283,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     }
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );
@@ -304,18 +304,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Редактировать категорию'),
+              title: const Text('Редактировать категорию'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                           labelText: 'Название', border: OutlineInputBorder()),
                     ),
-                    SizedBox(height: 16),
-                    Text('Иконка:',
+                    const SizedBox(height: 16),
+                    const Text('Иконка:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -351,8 +351,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Цвет:',
+                    const SizedBox(height: 16),
+                    const Text('Цвет:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -400,7 +400,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -416,7 +416,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     }
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );
@@ -433,16 +433,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Новая подкатегория'),
+          title: const Text('Новая подкатегория'),
           content: TextField(
             controller: nameController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
                 labelText: 'Название', border: OutlineInputBorder()),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -458,7 +458,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 }
                 Navigator.pop(context);
               },
-              child: Text('Сохранить'),
+              child: const Text('Сохранить'),
             ),
           ],
         );
@@ -471,17 +471,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Удалить категорию?'),
+          title: const Text('Удалить категорию?'),
           content:
               Text('${category.name}\nВсе подкатегории также будут удалены.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Удалить', style: TextStyle(color: Colors.red)),
+              child: const Text('Удалить', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -504,16 +504,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Удалить подкатегорию?'),
+          title: const Text('Удалить подкатегорию?'),
           content: Text(subCategory.name),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Удалить', style: TextStyle(color: Colors.red)),
+              child: const Text('Удалить', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -532,11 +532,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Widget _buildTransferCategoryList() {
     return ListView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       children: [
         for (var category in widget.transferCategories)
           Card(
-            margin: EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: 8),
             child: ExpansionTile(
               leading: CircleAvatar(
                 backgroundColor: _getColorFromHex(category.color),
@@ -548,29 +548,29 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.add, color: Colors.teal),
+                    icon: const Icon(Icons.add, color: Colors.teal),
                     onPressed: () =>
                         _showAddTransferSubCategoryDialog(category),
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red, size: 20),
+                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                     onPressed: () {
                       showDialog(
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: Text('Удалить категорию?'),
+                            title: const Text('Удалить категорию?'),
                             content: Text(category.name),
                             actions: [
                               TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: Text('Отмена')),
+                                  child: const Text('Отмена')),
                               ElevatedButton(
                                 onPressed: () {
                                   widget.onDeleteTransferCategory(category);
                                   Navigator.pop(context);
                                 },
-                                child: Text('Удалить',
+                                child: const Text('Удалить',
                                     style: TextStyle(color: Colors.red)),
                               ),
                             ],
@@ -585,10 +585,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 for (var sub in widget.transferSubCategories
                     .where((s) => s.parentName == category.name))
                   ListTile(
-                    leading: Icon(Icons.subdirectory_arrow_right),
+                    leading: const Icon(Icons.subdirectory_arrow_right),
                     title: Text(sub.name),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red, size: 18),
+                      icon: const Icon(Icons.delete, color: Colors.red, size: 18),
                       onPressed: () {
                         widget.onDeleteTransferSubCategory?.call(sub);
                       },
@@ -597,11 +597,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ],
             ),
           ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: () => _showAddTransferCategoryDialog(),
-          icon: Icon(Icons.add),
-          label: Text('Добавить категорию'),
+          icon: const Icon(Icons.add),
+          label: const Text('Добавить категорию'),
         ),
       ],
     );
@@ -617,11 +617,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           title: Text('Подкатегория для "${category.name}"'),
           content: TextField(
             controller: controller,
-            decoration: InputDecoration(labelText: 'Название'),
+            decoration: const InputDecoration(labelText: 'Название'),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+                onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
             ElevatedButton(
               onPressed: () {
                 final name = controller.text.trim();
@@ -630,7 +630,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     ?.call(SubCategory(name, category.name, Icons.swap_horiz));
                 Navigator.pop(context);
               },
-              child: Text('Сохранить'),
+              child: const Text('Сохранить'),
             ),
           ],
         );
@@ -648,15 +648,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Новая категория переводов'),
+              title: const Text('Новая категория переводов'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: InputDecoration(labelText: 'Название'),
+                    decoration: const InputDecoration(labelText: 'Название'),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     children: [
@@ -689,7 +689,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Отмена')),
+                    child: const Text('Отмена')),
                 ElevatedButton(
                   onPressed: () {
                     final name = nameController.text.trim();
@@ -698,7 +698,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         Category(name, 'swap', selectedColor));
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );

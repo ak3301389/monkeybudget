@@ -9,13 +9,13 @@ class UpdateDialog extends StatefulWidget {
   final String notes;
 
   const UpdateDialog({
-    Key? key,
+    super.key,
     required this.version,
     required this.buildNumber,
     required this.url,
     required this.apkUrl,
     required this.notes,
-  }) : super(key: key);
+  });
 
   @override
   State<UpdateDialog> createState() => _UpdateDialogState();
@@ -60,7 +60,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Row(
+      title: const Row(
         children: [
           Icon(Icons.system_update, color: Colors.teal),
           SizedBox(width: 8),
@@ -74,25 +74,25 @@ class _UpdateDialogState extends State<UpdateDialog> {
           children: [
             Text(
               'Версия ${widget.version}+${widget.buildNumber}',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             if (widget.notes.isNotEmpty) ...[
-              Text('Что нового:',
+              const Text('Что нового:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(height: 4),
-              Text(widget.notes, style: TextStyle(fontSize: 13)),
-              SizedBox(height: 12),
+              const SizedBox(height: 4),
+              Text(widget.notes, style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 12),
             ],
             if (_isDownloading) ...[
               LinearProgressIndicator(value: _progress > 0 ? _progress : null),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                '${_status} ${_progress > 0 ? "${(_progress * 100).toStringAsFixed(0)}%" : ""}',
-                style: TextStyle(fontSize: 12),
+                '$_status ${_progress > 0 ? "${(_progress * 100).toStringAsFixed(0)}%" : ""}',
+                style: const TextStyle(fontSize: 12),
               ),
             ] else if (_status.isNotEmpty) ...[
-              Text(_status, style: TextStyle(fontSize: 12, color: Colors.red)),
+              Text(_status, style: const TextStyle(fontSize: 12, color: Colors.red)),
             ],
           ],
         ),
@@ -101,12 +101,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
         if (!_isDownloading)
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Позже'),
+            child: const Text('Позже'),
           ),
         if (!_isDownloading)
           ElevatedButton.icon(
-            icon: Icon(Icons.download),
-            label: Text('Скачать и установить'),
+            icon: const Icon(Icons.download),
+            label: const Text('Скачать и установить'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.teal,
               foregroundColor: Colors.white,

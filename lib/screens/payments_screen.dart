@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models.dart';
 import 'payment_schedule.dart';
@@ -20,7 +20,7 @@ class PaymentsScreen extends StatefulWidget {
   final Function(Payment) onCancelPayment;
 
   const PaymentsScreen({
-    Key? key,
+    super.key,
     required this.payments,
     required this.accounts,
     required this.expenseCategories,
@@ -34,7 +34,7 @@ class PaymentsScreen extends StatefulWidget {
     required this.onDeleteAll,
     required this.onPayNow,
     required this.onCancelPayment,
-  }) : super(key: key);
+  });
 
   @override
   _PaymentsScreenState createState() => _PaymentsScreenState();
@@ -120,7 +120,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Платежи',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
@@ -128,12 +128,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.upload_file, color: Colors.teal, size: 28),
+                    icon: const Icon(Icons.upload_file, color: Colors.teal, size: 28),
                     tooltip: 'Импорт из файла',
                     onPressed: _importFromJson,
                   ),
                   IconButton(
-                    icon: Icon(Icons.add_circle, color: Colors.teal, size: 30),
+                    icon: const Icon(Icons.add_circle, color: Colors.teal, size: 30),
                     onPressed: _showAddDialog,
                   ),
                 ],
@@ -249,7 +249,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
-        leading: Icon(
+        leading: const Icon(
           Icons.calendar_month,
           color: Colors.teal,
         ),
@@ -320,14 +320,14 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   const SizedBox(width: 8),
                   if (!isPaid)
                     IconButton(
-                      icon: Icon(Icons.payment, size: 20, color: Colors.green),
+                      icon: const Icon(Icons.payment, size: 20, color: Colors.green),
                       tooltip: 'Оплатить',
                       onPressed: () => widget.onPayNow(p),
                     ),
                 ],
               ),
             );
-          }).toList(),
+          }),
           if (pending > 0)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -426,7 +426,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedFromAccountId,
+                  initialValue: selectedFromAccountId,
                   decoration: const InputDecoration(
                     labelText: 'Счёт',
                     border: OutlineInputBorder(),
@@ -443,7 +443,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     first.fromAccountId != first.toAccountId) ...[
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedToAccountId,
+                    initialValue: selectedToAccountId,
                     decoration: const InputDecoration(
                       labelText: 'Счёт зачисления',
                       border: OutlineInputBorder(),
@@ -459,7 +459,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 ],
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: frequency,
+                  initialValue: frequency,
                   decoration: const InputDecoration(
                     labelText: 'Периодичность',
                     border: OutlineInputBorder(),
@@ -496,7 +496,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: customUnit,
+                          initialValue: customUnit,
                           decoration: const InputDecoration(
                             labelText: 'Единица',
                             border: OutlineInputBorder(),
@@ -763,12 +763,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     final isPaid = payment.status == 'paid';
 
     return Card(
-      margin: EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: _buildPaymentIcon(payment),
         title: Text(
           payment.name,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,51 +781,50 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 color: payment.isIncome ? Colors.green : Colors.red,
               ),
             ),
-            if (nextDate != null)
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 14,
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: isOverdue
+                      ? Colors.red
+                      : (isSoon ? Colors.orange : Colors.blue),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${nextDate.day}.${nextDate.month}.${nextDate.year}',
+                  style: TextStyle(
+                    fontSize: 12,
                     color: isOverdue
                         ? Colors.red
                         : (isSoon ? Colors.orange : Colors.blue),
+                    fontWeight:
+                        isOverdue ? FontWeight.bold : FontWeight.normal,
                   ),
-                  SizedBox(width: 4),
-                  Text(
-                    '${nextDate.day}.${nextDate.month}.${nextDate.year}',
+                ),
+                if (isOverdue) ...[
+                  const SizedBox(width: 4),
+                  const Text(
+                    'ПРОСРОЧЕН!',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isOverdue
-                          ? Colors.red
-                          : (isSoon ? Colors.orange : Colors.blue),
-                      fontWeight:
-                          isOverdue ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 10,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (isOverdue) ...[
-                    SizedBox(width: 4),
-                    Text(
-                      'ПРОСРОЧЕН!',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
+                ] else if (isSoon) ...[
+                  const SizedBox(width: 4),
+                  const Text(
+                    'СКОРО',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ] else if (isSoon) ...[
-                    SizedBox(width: 4),
-                    Text(
-                      'СКОРО',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
+            ),
           ],
         ),
         trailing: Row(
@@ -837,13 +836,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 child: Text(payment.isIncome ? 'Зачислить' : 'Списать'),
               )
             else if (isPaid)
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(4),
@@ -855,32 +854,32 @@ class _PaymentsScreenState extends State<PaymentsScreen>
               )
             else
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Text(
                   '⏳ Ожидание',
                   style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
               ),
-            SizedBox(width: 4),
+            const SizedBox(width: 4),
             IconButton(
-              icon: Icon(Icons.delete, size: 20, color: Colors.red),
+              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text('Удалить платёж?'),
+                    title: const Text('Удалить платёж?'),
                     content: Text(payment.name),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('Отмена'),
+                        child: const Text('Отмена'),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           widget.onDelete(payment);
                           Navigator.pop(context);
                         },
-                        child: Text('Удалить',
+                        child: const Text('Удалить',
                             style: TextStyle(color: Colors.red)),
                       ),
                     ],
@@ -912,7 +911,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
           children: [
             _buildSmallAccountIcon(payment.fromAccountId, size: 36),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Icon(
                 Icons.arrow_forward,
                 size: 14,
@@ -1007,29 +1006,29 @@ class _PaymentsScreenState extends State<PaymentsScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(payment.name, style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
+            Text(payment.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             Text(
               'Сумма: ${payment.amount.toStringAsFixed(2)} ${widget.currency}',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
               'Со счёта: ${_getAccountName(payment.fromAccountId)}',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             if (!payment.isIncome &&
                 payment.toAccountId.isNotEmpty &&
                 payment.fromAccountId != payment.toAccountId)
               Text(
                 'На счёт: ${_getAccountName(payment.toAccountId)}',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1038,7 +1037,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             child: Text(payment.isIncome ? 'Зачислить' : 'Списать',
-                style: TextStyle(color: Colors.white)),
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1061,13 +1060,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     String? selectedCategory;
     String? selectedSubCategory;
 
+    DateTime startDate = DateTime.now();
+
     String frequency = 'monthly';
     int interval = 1;
     int customInterval = 1;
     String customUnit = 'months';
-    int dayOfWeek = 1;
-
-    DateTime startDate = DateTime.now();
+    int dayOfWeek = startDate.weekday;
 
     String expenseType = 'service';
 
@@ -1075,13 +1074,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Новый платёж'),
+          title: const Text('Новый платёж'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SegmentedButton<bool>(
-                  segments: [
+                  segments: const [
                     ButtonSegment(
                       value: false,
                       label: Text('Расход'),
@@ -1107,10 +1106,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     });
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (!isIncome)
                   SegmentedButton<String>(
-                    segments: [
+                    segments: const [
                       ButtonSegment(
                         value: 'service',
                         label: Text('Оплата услуги'),
@@ -1135,29 +1134,29 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       });
                     },
                   ),
-                if (!isIncome) SizedBox(height: 12),
+                if (!isIncome) const SizedBox(height: 12),
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Название',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextField(
                   controller: amountController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Сумма',
                     prefixText: '${widget.currency} ',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (!isIncome)
                   DropdownButtonFormField(
-                    value: fromAccountId,
-                    decoration: InputDecoration(labelText: 'Счёт списания'),
+                    initialValue: fromAccountId,
+                    decoration: const InputDecoration(labelText: 'Счёт списания'),
                     items: widget.accounts
                         .map((a) =>
                             DropdownMenuItem(value: a.id, child: Text(a.name)))
@@ -1165,10 +1164,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (value) =>
                         setState(() => fromAccountId = value!),
                   ),
-                if (!isIncome) SizedBox(height: 12),
+                if (!isIncome) const SizedBox(height: 12),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
                   DropdownButtonFormField(
-                    value: toAccountId,
+                    initialValue: toAccountId,
                     decoration: InputDecoration(
                       labelText:
                           isIncome ? 'Счёт зачисления' : 'Счёт пополнения',
@@ -1180,10 +1179,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (value) => setState(() => toAccountId = value!),
                   ),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                 DropdownButtonFormField(
-                  value: selectedCategory,
-                  decoration: InputDecoration(labelText: 'Категория'),
+                  initialValue: selectedCategory,
+                  decoration: const InputDecoration(labelText: 'Категория'),
                   items: (isIncome
                           ? widget.incomeCategories
                           : widget.expenseCategories)
@@ -1193,11 +1192,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   onChanged: (value) =>
                       setState(() => selectedCategory = value),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (selectedCategory != null) ...[
                   DropdownButtonFormField<String>(
-                    value: selectedSubCategory,
-                    decoration: InputDecoration(
+                    initialValue: selectedSubCategory,
+                    decoration: const InputDecoration(
                       labelText: 'Подкатегория',
                       border: OutlineInputBorder(),
                     ),
@@ -1215,12 +1214,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (value) =>
                         setState(() => selectedSubCategory = value),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                 ],
                 DropdownButtonFormField(
-                  value: frequency,
-                  decoration: InputDecoration(labelText: 'Периодичность'),
-                  items: [
+                  initialValue: frequency,
+                  decoration: const InputDecoration(labelText: 'Периодичность'),
+                  items: const [
                     DropdownMenuItem(value: 'daily', child: Text('Ежедневно')),
                     DropdownMenuItem(
                         value: 'weekly', child: Text('Еженедельно')),
@@ -1233,14 +1232,34 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ],
                   onChanged: (value) => setState(() => frequency = value!),
                 ),
+                if (frequency == 'weekly') ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    initialValue: dayOfWeek,
+                    decoration: const InputDecoration(
+                      labelText: 'День недели',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 1, child: Text('Понедельник')),
+                      DropdownMenuItem(value: 2, child: Text('Вторник')),
+                      DropdownMenuItem(value: 3, child: Text('Среда')),
+                      DropdownMenuItem(value: 4, child: Text('Четверг')),
+                      DropdownMenuItem(value: 5, child: Text('Пятница')),
+                      DropdownMenuItem(value: 6, child: Text('Суббота')),
+                      DropdownMenuItem(value: 7, child: Text('Воскресенье')),
+                    ],
+                    onChanged: (v) => setState(() => dayOfWeek = v!),
+                  ),
+                ],
                 if (frequency == 'custom') ...[
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: TextField(
                           keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Каждые',
                             border: OutlineInputBorder(),
                           ),
@@ -1248,11 +1267,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                               () => customInterval = int.tryParse(v) ?? 1),
                         ),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: customUnit,
-                          decoration: InputDecoration(
+                          initialValue: customUnit,
+                          decoration: const InputDecoration(
                             labelText: 'Единица',
                             border: OutlineInputBorder(),
                           ),
@@ -1272,11 +1291,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     ],
                   ),
                 ],
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 ListTile(
                   title: Text(
                       'Дата первого платежа: ${startDate.day}.${startDate.month}.${startDate.year}'),
-                  leading: Icon(Icons.calendar_today),
+                  leading: const Icon(Icons.calendar_today),
                   onTap: () async {
                     final date = await showDatePicker(
                       context: context,
@@ -1284,7 +1303,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       firstDate: DateTime(2020),
                       lastDate: DateTime(2030),
                     );
-                    if (date != null) setState(() => startDate = date);
+                    if (date != null) {
+                      setState(() {
+                        startDate = date;
+                        dayOfWeek = date.weekday;
+                      });
+                    }
                   },
                 ),
               ],
@@ -1293,14 +1317,15 @@ class _PaymentsScreenState extends State<PaymentsScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () {
                 final name = nameController.text.trim();
                 final amount = _parseAmount(amountController.text);
-                if (name.isEmpty || amount <= 0 || selectedCategory == null)
+                if (name.isEmpty || amount <= 0 || selectedCategory == null) {
                   return;
+                }
 
                 final effectiveFrequency = frequency == 'custom'
                     ? (customUnit == 'days'
@@ -1361,7 +1386,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
                 Navigator.pop(context);
               },
-              child: Text('Сохранить'),
+              child: const Text('Сохранить'),
             ),
           ],
         ),
@@ -1436,7 +1461,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedFromAccountId,
+                    initialValue: selectedFromAccountId,
                     decoration: const InputDecoration(
                       labelText: 'Счёт',
                       border: OutlineInputBorder(),
@@ -1453,7 +1478,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   if (expenseType == 'transfer') ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: selectedToAccountId,
+                      initialValue: selectedToAccountId,
                       decoration: const InputDecoration(
                         labelText: 'Счёт зачисления',
                         border: OutlineInputBorder(),
@@ -1481,7 +1506,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     decoration: const InputDecoration(
                       labelText: 'Категория',
                       border: OutlineInputBorder(),
@@ -1626,13 +1651,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Редактировать платёж'),
+          title: const Text('Редактировать платёж'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SegmentedButton<bool>(
-                  segments: [
+                  segments: const [
                     ButtonSegment(
                       value: false,
                       label: Text('Расход'),
@@ -1658,10 +1683,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     });
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (!isIncome)
                   SegmentedButton<String>(
-                    segments: [
+                    segments: const [
                       ButtonSegment(
                         value: 'service',
                         label: Text('Оплата услуги'),
@@ -1686,29 +1711,29 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       });
                     },
                   ),
-                if (!isIncome) SizedBox(height: 12),
+                if (!isIncome) const SizedBox(height: 12),
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Название',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextField(
                   controller: amountController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Сумма',
                     prefixText: '${widget.currency} ',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (!isIncome)
                   DropdownButtonFormField(
-                    value: fromAccountId,
-                    decoration: InputDecoration(labelText: 'Счёт списания'),
+                    initialValue: fromAccountId,
+                    decoration: const InputDecoration(labelText: 'Счёт списания'),
                     items: widget.accounts
                         .map((a) =>
                             DropdownMenuItem(value: a.id, child: Text(a.name)))
@@ -1716,10 +1741,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (value) =>
                         setState(() => fromAccountId = value!),
                   ),
-                if (!isIncome) SizedBox(height: 12),
+                if (!isIncome) const SizedBox(height: 12),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
                   DropdownButtonFormField(
-                    value: toAccountId,
+                    initialValue: toAccountId,
                     decoration: InputDecoration(
                       labelText:
                           isIncome ? 'Счёт зачисления' : 'Счёт пополнения',
@@ -1731,10 +1756,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (value) => setState(() => toAccountId = value!),
                   ),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                 DropdownButtonFormField(
-                  value: selectedCategory,
-                  decoration: InputDecoration(labelText: 'Категория'),
+                  initialValue: selectedCategory,
+                  decoration: const InputDecoration(labelText: 'Категория'),
                   items: (isIncome
                           ? widget.incomeCategories
                           : widget.expenseCategories)
@@ -1744,11 +1769,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   onChanged: (value) =>
                       setState(() => selectedCategory = value),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (selectedCategory != null) ...[
                   DropdownButtonFormField<String>(
-                    value: selectedSubCategory,
-                    decoration: InputDecoration(
+                    initialValue: selectedSubCategory,
+                    decoration: const InputDecoration(
                       labelText: 'Подкатегория',
                       border: OutlineInputBorder(),
                     ),
@@ -1766,12 +1791,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (value) =>
                         setState(() => selectedSubCategory = value),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                 ],
                 DropdownButtonFormField(
-                  value: frequency,
-                  decoration: InputDecoration(labelText: 'Периодичность'),
-                  items: [
+                  initialValue: frequency,
+                  decoration: const InputDecoration(labelText: 'Периодичность'),
+                  items: const [
                     DropdownMenuItem(value: 'daily', child: Text('Ежедневно')),
                     DropdownMenuItem(
                         value: 'weekly', child: Text('Еженедельно')),
@@ -1783,11 +1808,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ],
                   onChanged: (value) => setState(() => frequency = value!),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 ListTile(
                   title: Text(
                       'Дата первого платежа: ${startDate.day}.${startDate.month}.${startDate.year}'),
-                  leading: Icon(Icons.calendar_today),
+                  leading: const Icon(Icons.calendar_today),
                   onTap: () async {
                     final date = await showDatePicker(
                       context: context,
@@ -1804,14 +1829,15 @@ class _PaymentsScreenState extends State<PaymentsScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () {
                 final name = nameController.text.trim();
                 final amount = _parseAmount(amountController.text);
-                if (name.isEmpty || amount <= 0 || selectedCategory == null)
+                if (name.isEmpty || amount <= 0 || selectedCategory == null) {
                   return;
+                }
 
                 final newSchedule = PaymentSchedule.fromPattern(
                   startDate: startDate,
@@ -1856,7 +1882,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
                 Navigator.pop(context);
               },
-              child: Text('Сохранить'),
+              child: const Text('Сохранить'),
             ),
           ],
         ),

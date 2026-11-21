@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({Key? key}) : super(key: key);
+  const ScannerScreen({super.key});
   
   @override
   _ScannerScreenState createState() => _ScannerScreenState();
@@ -15,7 +15,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Сканирование чека'),
+        title: const Text('Сканирование чека'),
       ),
       body: MobileScanner(
         onDetect: (capture) {

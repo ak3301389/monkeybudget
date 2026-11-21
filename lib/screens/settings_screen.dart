@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import '../services/backup_service.dart';
@@ -18,7 +18,7 @@ class SettingsScreen extends StatefulWidget {
   final Function() onClearAll;
 
   const SettingsScreen({
-    Key? key,
+    super.key,
     required this.storageService,
     required this.backupService,
     required this.currency,
@@ -26,7 +26,7 @@ class SettingsScreen extends StatefulWidget {
     required this.onCurrencyChanged,
     required this.onNotificationsChanged,
     required this.onClearAll,
-  }) : super(key: key);
+  });
 
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
@@ -92,120 +92,120 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       children: [
-        Text('Настройки',
+        const Text('Настройки',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Card(
           child: ListTile(
-            leading: Icon(Icons.account_circle),
-            title: Text('Войти через Google'),
+            leading: const Icon(Icons.account_circle),
+            title: const Text('Войти через Google'),
             subtitle: Text(_userEmail ?? 'Не выполнен вход'),
             onTap: _signInWithGoogle,
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Card(
           child: Column(
             children: [
               SwitchListTile(
-                secondary: Icon(Icons.notifications),
-                title: Text('Уведомления'),
-                subtitle: Text('Напоминать о платежах'),
+                secondary: const Icon(Icons.notifications),
+                title: const Text('Уведомления'),
+                subtitle: const Text('Напоминать о платежах'),
                 value: widget.showNotifications,
                 onChanged: widget.onNotificationsChanged,
               ),
             ],
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Card(
           child: Column(
             children: [
               ListTile(
-                leading: Icon(Icons.cloud_upload),
-                title: Text('Сохранить в Firebase'),
-                subtitle: Text('Экспорт в облако'),
+                leading: const Icon(Icons.cloud_upload),
+                title: const Text('Сохранить в Firebase'),
+                subtitle: const Text('Экспорт в облако'),
                 onTap: _isBusy ? null : () => _saveToFirebase(),
               ),
-              Divider(),
+              const Divider(),
               ListTile(
-                leading: Icon(Icons.cloud_download),
-                title: Text('Восстановить из Firebase'),
-                subtitle: Text('Импорт из облака'),
+                leading: const Icon(Icons.cloud_download),
+                title: const Text('Восстановить из Firebase'),
+                subtitle: const Text('Импорт из облака'),
                 onTap: _isBusy ? null : () => _restoreFromFirebase(),
               ),
-              Divider(),
+              const Divider(),
               ListTile(
-                leading: Icon(Icons.key),
-                title: Text('Ввести код синхронизации'),
-                subtitle: Text('Подключиться к существующим данным'),
+                leading: const Icon(Icons.key),
+                title: const Text('Ввести код синхронизации'),
+                subtitle: const Text('Подключиться к существующим данным'),
                 onTap: _enterSyncCode,
               ),
-              Divider(),
+              const Divider(),
               ListTile(
-                leading: Icon(Icons.pin),
-                title: Text('PIN-код'),
-                subtitle: Text('Защита входа'),
+                leading: const Icon(Icons.pin),
+                title: const Text('PIN-код'),
+                subtitle: const Text('Защита входа'),
                 onTap: _setPin,
               ),
             ],
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Card(
           child: Column(
             children: [
               ListTile(
-                leading: Icon(Icons.save),
-                title: Text('Сохранить в файл'),
-                subtitle: Text('Экспорт данных'),
+                leading: const Icon(Icons.save),
+                title: const Text('Сохранить в файл'),
+                subtitle: const Text('Экспорт данных'),
                 onTap: _isBusy ? null : () => _saveToPhone(),
               ),
-              Divider(),
+              const Divider(),
               ListTile(
-                leading: Icon(Icons.folder_open),
-                title: Text('Восстановить из файла'),
-                subtitle: Text('Выбрать файл бэкапа'),
+                leading: const Icon(Icons.folder_open),
+                title: const Text('Восстановить из файла'),
+                subtitle: const Text('Выбрать файл бэкапа'),
                 onTap: _isBusy ? null : () => _restoreFromFile(),
               ),
             ],
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Card(
           child: Column(
             children: [
               ListTile(
-                leading: Icon(Icons.delete_forever, color: Colors.red),
-                title: Text('Очистить все данные',
+                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text('Очистить все данные',
                     style: TextStyle(color: Colors.red)),
                 onTap: () => _confirmClearAll(),
               ),
             ],
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Card(
           child: Column(
             children: [
               ListTile(
-                leading: Icon(Icons.info),
-                title: Text('О приложении'),
+                leading: const Icon(Icons.info),
+                title: const Text('О приложении'),
                 subtitle: Text('Версия $_version'),
               ),
-              Divider(),
+              const Divider(),
               ListTile(
-                leading: Icon(Icons.history),
-                title: Text('История версий'),
+                leading: const Icon(Icons.history),
+                title: const Text('История версий'),
                 onTap: _showVersionHistory,
               ),
             ],
           ),
         ),
         if (_isBusy)
-          Padding(
+          const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
@@ -269,28 +269,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context: context,
             builder: (context) {
               return AlertDialog(
-                title: Text('✅ Данные сохранены'),
+                title: const Text('✅ Данные сохранены'),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Ваш код синхронизации:'),
-                    SizedBox(height: 8),
+                    const Text('Ваш код синхронизации:'),
+                    const SizedBox(height: 8),
                     Text(
                       code,
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2),
                     ),
-                    SizedBox(height: 8),
-                    Text('Введите этот код на другом устройстве',
+                    const SizedBox(height: 8),
+                    const Text('Введите этот код на другом устройстве',
                         style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text('OK')),
+                      child: const Text('OK')),
                 ],
               );
             },
@@ -298,7 +298,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Ошибка загрузки')),
+          const SnackBar(content: Text('❌ Ошибка загрузки')),
         );
       }
     } catch (e) {
@@ -316,26 +316,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Установить PIN-код'),
+          title: const Text('Установить PIN-код'),
           content: TextField(
             controller: pinController,
             keyboardType: TextInputType.number,
             maxLength: 4,
-            decoration: InputDecoration(labelText: 'PIN-код'),
+            decoration: const InputDecoration(labelText: 'PIN-код'),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+                onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
             ElevatedButton(
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setString('pin_code', pinController.text);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('✅ PIN-код установлен')),
+                  const SnackBar(content: Text('✅ PIN-код установлен')),
                 );
               },
-              child: Text('Сохранить'),
+              child: const Text('Сохранить'),
             ),
           ],
         );
@@ -350,10 +350,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Код синхронизации'),
+          title: const Text('Код синхронизации'),
           content: TextField(
             controller: codeController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Введите код',
               hintText: 'XXX-XXX-XXX',
               border: OutlineInputBorder(),
@@ -361,7 +361,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+                onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
             ElevatedButton(
               onPressed: () async {
                 final code = codeController.text.trim().toUpperCase();
@@ -378,7 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           success ? '✅ Данные загружены!' : '❌ Неверный код')),
                 );
               },
-              child: Text('Подключить'),
+              child: const Text('Подключить'),
             ),
           ],
         );
@@ -413,17 +413,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('История версий'),
-          content: Container(
+          title: const Text('История версий'),
+          content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
-              child: Text(history, style: TextStyle(fontSize: 14)),
+              child: Text(history, style: const TextStyle(fontSize: 14)),
             ),
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Закрыть')),
+                child: const Text('Закрыть')),
           ],
         );
       },
@@ -435,23 +435,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Очистить все данные?'),
-          content: Text(
+          title: const Text('Очистить все данные?'),
+          content: const Text(
               'Все счета, операции и категории будут удалены.\nЭто действие нельзя отменить!'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () {
                 widget.onClearAll();
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Данные очищены')),
+                  const SnackBar(content: Text('Данные очищены')),
                 );
               },
-              child: Text('Удалить', style: TextStyle(color: Colors.red)),
+              child: const Text('Удалить', style: TextStyle(color: Colors.red)),
             ),
           ],
         );

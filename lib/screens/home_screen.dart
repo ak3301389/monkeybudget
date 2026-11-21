@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,7 +16,6 @@ import 'categories_screen.dart';
 import 'payments_screen.dart';
 import 'settings_screen.dart';
 import 'stats_screen.dart';
-import 'payment_schedule.dart';
 import 'scanner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,11 +24,11 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback? onThemeChanged;
 
   const HomeScreen({
-    Key? key,
+    super.key,
     required this.storageService,
     required this.backupService,
     this.onThemeChanged,
-  }) : super(key: key);
+  });
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -253,11 +252,48 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _autoSync() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+
+    final hasLocalData = transactions.isNotEmpty || payments.isNotEmpty;
+
+    if (!hasLocalData) {
+      final restored = await widget.backupService.restoreFromFirebase();
+      if (restored && mounted) {
+        _loadData();
+      }
+      if (mounted) _checkUpcomingPayments();
+      return;
+    }
+
+    final shouldRestore = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Синхронизация с облаком'),
+        content: const Text(
+          'На устройстве уже есть локальные данные. Загрузить копию из облака (локальные изменения будут заменены) или оставить текущие данные?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Оставить локальные'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Загрузить из облака'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldRestore == true && mounted) {
+      final restored = await widget.backupService.restoreFromFirebase();
+      if (restored && mounted) {
+        _loadData();
+      }
+    }
+
     if (mounted) {
-      final backupService = widget.backupService;
-      await backupService.restoreFromFirebase();
-      _loadData();
       _checkUpcomingPayments();
     }
   }
@@ -265,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _checkUpcomingPayments() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(Duration(days: 1));
+    final tomorrow = today.add(const Duration(days: 1));
 
     final upcoming = payments.where((p) {
       if (p.status != 'pending') return false;
@@ -279,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('💰 Предстоящие платежи'),
+          title: const Text('💰 Предстоящие платежи'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: upcoming.map((p) {
@@ -304,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text('ОК')),
+                onPressed: () => Navigator.pop(context), child: const Text('ОК')),
           ],
         );
       },
@@ -312,6 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadData() {
+    bool isFreshStart = false;
+
     setState(() {
       accounts = widget.storageService.loadAccounts();
       accounts.sort((a, b) => a.order.compareTo(b.order));
@@ -325,6 +363,8 @@ class _HomeScreenState extends State<HomeScreen> {
       currency = widget.storageService.getCurrency();
       showNotifications = widget.storageService.getShowNotifications();
       isDarkMode = widget.storageService.getIsDarkMode();
+
+      isFreshStart = accounts.isEmpty && transactions.isEmpty;
 
       if (accounts.isEmpty) {
         accounts = [
@@ -381,7 +421,14 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    if (accounts.isEmpty && transactions.isEmpty) {
+    final transferSubsJson =
+        widget.storageService.getString('transfer_subcategories');
+    if (transferSubsJson != null) {
+      transferSubCategories = (jsonDecode(transferSubsJson) as List)
+          .map((s) => SubCategory.fromJson(s))
+          .toList();
+    }
+    if (isFreshStart) {
       _checkLocalBackups();
     }
   }
@@ -408,13 +455,13 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text('Найдена резервная копия'),
+            title: const Text('Найдена резервная копия'),
             content: Text(
                 'Восстановить данные из файла?\n\n${files.first.path.split('/').last}'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Нет'),
+                child: const Text('Нет'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -424,11 +471,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (success) {
                     _loadData();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('✅ Данные восстановлены!')),
+                      const SnackBar(content: Text('✅ Данные восстановлены!')),
                     );
                   }
                 },
-                child: Text('Да'),
+                child: const Text('Да'),
               ),
             ],
           );
@@ -443,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('💰 Домашняя бухгалтерия'),
+        title: const Text('💰 Домашняя бухгалтерия'),
         actions: [
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
@@ -457,7 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.pie_chart),
+            icon: const Icon(Icons.pie_chart),
             onPressed: () {
               Navigator.push(
                 context,
@@ -476,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: isDarkMode
-              ? LinearGradient(
+              ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
@@ -505,7 +552,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 220,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.teal.withOpacity(0.5),
+                    color: Colors.teal.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -517,7 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 260,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.purple.withOpacity(0.4),
+                    color: Colors.purple.withValues(alpha: 0.4),
                   ),
                 ),
               ),
@@ -529,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 240,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.blue.withOpacity(0.5),
+                    color: Colors.blue.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -630,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen> {
             currentView = index;
           });
         },
-        destinations: [
+        destinations: const [
           NavigationDestination(icon: Icon(Icons.receipt), label: 'Операции'),
           NavigationDestination(
               icon: Icon(Icons.account_balance_wallet), label: 'Счета'),
@@ -644,8 +691,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 _showAddAccountDialog();
               },
-              icon: Icon(Icons.add),
-              label: Text('Счёт'),
+              icon: const Icon(Icons.add),
+              label: const Text('Счёт'),
             )
           : null,
     );
@@ -654,8 +701,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showIncomeExpenseDialog(bool isIncome) {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
-    String selectedAccountId = widget.storageService.loadLastAccountId() ??
-        (accounts.isNotEmpty ? accounts[0].id : '');
+    if (accounts.isEmpty) return;
+    final lastId = widget.storageService.loadLastAccountId();
+    String selectedAccountId =
+        accounts.any((a) => a.id == lastId) ? lastId! : accounts.first.id;
     String? selectedCategory = widget.storageService.loadLastCategory();
     String? selectedSubCategory;
     DateTime selectedDate = DateTime.now();
@@ -674,8 +723,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField(
-                      value: selectedAccountId,
-                      decoration: InputDecoration(labelText: 'Счёт'),
+                      initialValue: selectedAccountId,
+                      decoration: const InputDecoration(labelText: 'Счёт'),
                       items: accounts.map((account) {
                         return DropdownMenuItem(
                             value: account.id, child: Text(account.name));
@@ -686,14 +735,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: amountController,
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onTap: () {
                         _hideKeyboard();
-                        Future.delayed(Duration(milliseconds: 50), () {
+                        Future.delayed(const Duration(milliseconds: 50), () {
                           SystemChannels.textInput
                               .invokeMethod('TextInput.show');
                         });
@@ -701,14 +750,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: InputDecoration(
                         labelText: 'Сумма (например: 100+50+25)',
                         prefixText: '$currency ',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.calculate),
+                          icon: const Icon(Icons.calculate),
                           onPressed: () => _showCalculator(amountController),
                         ),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Autocomplete<String>(
                       initialValue:
                           TextEditingValue(text: selectedCategory ?? ''),
@@ -737,12 +786,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           keyboardType: TextInputType.text,
                           onTap: () {
                             _hideKeyboard();
-                            Future.delayed(Duration(milliseconds: 50), () {
+                            Future.delayed(const Duration(milliseconds: 50), () {
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.show');
                             });
                           },
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Категория',
                             border: OutlineInputBorder(),
                           ),
@@ -803,12 +852,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             keyboardType: TextInputType.text,
                             onTap: () {
                               _hideKeyboard();
-                              Future.delayed(Duration(milliseconds: 50), () {
+                              Future.delayed(const Duration(milliseconds: 50), () {
                                 SystemChannels.textInput
                                     .invokeMethod('TextInput.show');
                               });
                             },
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Подкатегория',
                               border: OutlineInputBorder(),
                             ),
@@ -849,11 +898,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     ListTile(
                       title: Text(
                           'Дата: ${selectedDate.day}.${selectedDate.month}.${selectedDate.year}'),
-                      leading: Icon(Icons.calendar_today),
+                      leading: const Icon(Icons.calendar_today),
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -868,18 +917,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: noteController,
                       keyboardType: TextInputType.text,
                       onTap: () {
                         _hideKeyboard();
-                        Future.delayed(Duration(milliseconds: 50), () {
+                        Future.delayed(const Duration(milliseconds: 50), () {
                           SystemChannels.textInput
                               .invokeMethod('TextInput.show');
                         });
                       },
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Заметка',
                         border: OutlineInputBorder(),
                       ),
@@ -890,7 +939,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -963,10 +1012,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.pop(context);
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('✅ Операция добавлена')),
+                      const SnackBar(content: Text('✅ Операция добавлена')),
                     );
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );
@@ -981,24 +1030,24 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Сканер чека'),
+          title: const Text('Сканер чека'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Выберите способ:'),
-              SizedBox(height: 16),
+              const Text('Выберите способ:'),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
-                icon: Icon(Icons.qr_code_scanner),
-                label: Text('Сканировать камерой'),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Сканировать камерой'),
                 onPressed: () {
                   Navigator.pop(context);
                   _scanWithCamera();
                 },
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ElevatedButton.icon(
-                icon: Icon(Icons.paste),
-                label: Text('Вставить QR-код'),
+                icon: const Icon(Icons.paste),
+                label: const Text('Вставить QR-код'),
                 onPressed: () {
                   Navigator.pop(context);
                   _pasteQrCode();
@@ -1009,7 +1058,7 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Закрыть')),
+                child: const Text('Закрыть')),
           ],
         );
       },
@@ -1020,7 +1069,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-        builder: (context) => ScannerScreen(),
+        builder: (context) => const ScannerScreen(),
       ),
     );
 
@@ -1031,7 +1080,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _showScannedReceipt(parsed);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Не удалось распознать чек')),
+          const SnackBar(content: Text('Не удалось распознать чек')),
         );
       }
     }
@@ -1044,10 +1093,10 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('QR-код чека'),
+          title: const Text('QR-код чека'),
           content: TextField(
             controller: qrController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Вставьте QR-код',
               border: OutlineInputBorder(),
             ),
@@ -1055,7 +1104,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text('Отмена')),
+                onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
             ElevatedButton(
               onPressed: () async {
                 final qrData = qrController.text.trim();
@@ -1070,11 +1119,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   _showScannedReceipt(result);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Не удалось распознать чек')),
+                    const SnackBar(content: Text('Не удалось распознать чек')),
                   );
                 }
               },
-              child: Text('Распознать'),
+              child: const Text('Распознать'),
             ),
           ],
         );
@@ -1083,11 +1132,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showScannedReceipt(Map<String, dynamic> data) {
+    if (accounts.isEmpty || expenseCategories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Сначала создайте хотя бы один счёт и категорию')),
+      );
+      return;
+    }
+
     final amountController =
         TextEditingController(text: data['amount'].toString());
-    String selectedAccount = accounts.isNotEmpty ? accounts[0].id : '';
-    String selectedCategory =
-        expenseCategories.isNotEmpty ? expenseCategories[0].name : 'Продукты';
+    String selectedAccount = accounts.first.id;
+    String selectedCategory = expenseCategories.first.name;
 
     showDialog(
       context: context,
@@ -1095,20 +1151,20 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Чек распознан'),
+              title: const Text('Чек распознан'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: amountController,
                     keyboardType:
-                        TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(labelText: 'Сумма'),
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Сумма'),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedCategory,
-                    decoration: InputDecoration(labelText: 'Категория'),
+                    initialValue: selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Категория'),
                     items: expenseCategories.map((c) {
                       return DropdownMenuItem(
                           value: c.name, child: Text(c.name));
@@ -1117,10 +1173,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() => selectedCategory = value!);
                     },
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedAccount,
-                    decoration: InputDecoration(labelText: 'Счёт'),
+                    initialValue: selectedAccount,
+                    decoration: const InputDecoration(labelText: 'Счёт'),
                     items: accounts.map((a) {
                       return DropdownMenuItem(value: a.id, child: Text(a.name));
                     }).toList(),
@@ -1133,7 +1189,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Отмена')),
+                    child: const Text('Отмена')),
                 ElevatedButton(
                   onPressed: () {
                     final amount = _parseAmount(amountController.text);
@@ -1151,7 +1207,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );
@@ -1162,9 +1218,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showTransferDialog() {
+    if (accounts.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Для перевода нужно минимум два счёта')),
+      );
+      return;
+    }
+
     final amountController = TextEditingController();
-    String fromAccountId = accounts.isNotEmpty ? accounts[0].id : '';
-    String toAccountId = accounts.length > 1 ? accounts[1].id : '';
+    String fromAccountId = accounts.first.id;
+    String toAccountId = accounts.elementAt(1).id;
     DateTime selectedDate = DateTime.now();
     String? selectedCategory;
     String? selectedSubCategory;
@@ -1175,14 +1238,14 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Перевод между счетами'),
+              title: const Text('Перевод между счетами'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField(
-                      value: fromAccountId,
-                      decoration: InputDecoration(labelText: 'Со счёта'),
+                      initialValue: fromAccountId,
+                      decoration: const InputDecoration(labelText: 'Со счёта'),
                       items: accounts.map((account) {
                         return DropdownMenuItem(
                             value: account.id, child: Text(account.name));
@@ -1190,13 +1253,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       onChanged: (value) {
                         setState(() {
                           fromAccountId = value!;
+                          if (toAccountId == fromAccountId) {
+                            toAccountId = accounts
+                                .firstWhere((a) => a.id != fromAccountId)
+                                .id;
+                          }
                         });
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField(
-                      value: toAccountId,
-                      decoration: InputDecoration(labelText: 'На счёт'),
+                      initialValue: toAccountId,
+                      decoration: const InputDecoration(labelText: 'На счёт'),
                       items: accounts
                           .where((a) => a.id != fromAccountId)
                           .map((account) {
@@ -1209,22 +1277,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: amountController,
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Сумма',
                         prefixText: '$currency ',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     ListTile(
                       title: Text(
                           'Дата: ${selectedDate.day}.${selectedDate.month}.${selectedDate.year}'),
-                      leading: Icon(Icons.calendar_today),
+                      leading: const Icon(Icons.calendar_today),
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -1237,7 +1305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Autocomplete<String>(
                       optionsBuilder: (textEditingValue) {
                         if (textEditingValue.text.isEmpty) {
@@ -1261,12 +1329,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           keyboardType: TextInputType.text,
                           onTap: () {
                             _hideKeyboard();
-                            Future.delayed(Duration(milliseconds: 50), () {
+                            Future.delayed(const Duration(milliseconds: 50), () {
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.show');
                             });
                           },
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Категория',
                             border: OutlineInputBorder(),
                           ),
@@ -1289,7 +1357,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Autocomplete<String>(
                       optionsBuilder: (textEditingValue) {
                         final subs = transferSubCategories
@@ -1313,12 +1381,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           keyboardType: TextInputType.text,
                           onTap: () {
                             _hideKeyboard();
-                            Future.delayed(Duration(milliseconds: 50), () {
+                            Future.delayed(const Duration(milliseconds: 50), () {
                               SystemChannels.textInput
                                   .invokeMethod('TextInput.show');
                             });
                           },
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Подкатегория',
                             border: OutlineInputBorder(),
                           ),
@@ -1348,7 +1416,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1397,7 +1465,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     Navigator.pop(context);
                   },
-                  child: Text('Перевести'),
+                  child: const Text('Перевести'),
                 ),
               ],
             );
@@ -1423,13 +1491,13 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Добавить счёт'),
+              title: const Text('Добавить счёт'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SegmentedButton(
-                      segments: [
+                      segments: const [
                         ButtonSegment(
                             value: 'cash',
                             label: Text('Наличные'),
@@ -1450,44 +1518,44 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                           labelText: 'Название', border: OutlineInputBorder()),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: balanceController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Баланс',
                         prefixText: '$currency ',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: bankController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Банк',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     if (accountType == 'credit') ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       TextField(
                         controller: creditLimitController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText: 'Кредитный лимит',
                           prefixText: '$currency ',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ],
-                    SizedBox(height: 16),
-                    Text('Цвет:',
+                    const SizedBox(height: 16),
+                    const Text('Цвет:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -1512,11 +1580,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Иконка:',
+                    const SizedBox(height: 16),
+                    const Text('Иконка:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
-                    Text('Material:',
+                    const SizedBox(height: 8),
+                    const Text('Material:',
                         style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Wrap(
                       spacing: 8,
@@ -1547,8 +1615,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Банки:',
+                    const SizedBox(height: 16),
+                    const Text('Банки:',
                         style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Wrap(
                       spacing: 8,
@@ -1565,7 +1633,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Container(
                             width: 50,
                             height: 50,
-                            padding: EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? Colors.teal.shade100
@@ -1586,7 +1654,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1610,7 +1678,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ));
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );
@@ -1639,13 +1707,13 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Редактировать счёт'),
+              title: const Text('Редактировать счёт'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SegmentedButton(
-                      segments: [
+                      segments: const [
                         ButtonSegment(
                             value: 'cash',
                             label: Text('Наличные'),
@@ -1666,44 +1734,44 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                           labelText: 'Название', border: OutlineInputBorder()),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: balanceController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Баланс',
                         prefixText: '$currency ',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: bankController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Банк',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     if (accountType == 'credit') ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       TextField(
                         controller: creditLimitController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText: 'Кредитный лимит',
                           prefixText: '$currency ',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ],
-                    SizedBox(height: 16),
-                    Text('Цвет:',
+                    const SizedBox(height: 16),
+                    const Text('Цвет:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8,
@@ -1728,11 +1796,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Иконка:',
+                    const SizedBox(height: 16),
+                    const Text('Иконка:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
-                    Text('Material:',
+                    const SizedBox(height: 8),
+                    const Text('Material:',
                         style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Wrap(
                       spacing: 8,
@@ -1763,8 +1831,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 16),
-                    Text('Банки:',
+                    const SizedBox(height: 16),
+                    const Text('Банки:',
                         style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Wrap(
                       spacing: 8,
@@ -1781,7 +1849,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Container(
                             width: 50,
                             height: 50,
-                            padding: EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? Colors.teal.shade100
@@ -1802,7 +1870,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1829,7 +1897,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _updateAccount(account, updatedAccount);
                     Navigator.pop(context);
                   },
-                  child: Text('Сохранить'),
+                  child: const Text('Сохранить'),
                 ),
               ],
             );
@@ -1919,6 +1987,7 @@ class _HomeScreenState extends State<HomeScreen> {
       accounts.add(a);
       widget.storageService.saveAccounts(accounts);
     });
+    _saveToFirebase();
   }
 
   void _updateAccount(Account oldA, Account newA) {
@@ -1948,6 +2017,7 @@ class _HomeScreenState extends State<HomeScreen> {
       widget.storageService.saveAccounts(accounts);
       widget.storageService.saveTransactions(transactions);
     });
+    _saveToFirebase();
   }
 
   void _updateAccountBalance(String accountId, double delta) {
@@ -2019,6 +2089,7 @@ class _HomeScreenState extends State<HomeScreen> {
       widget.storageService.setString('transfer_categories',
           jsonEncode(transferCategories.map((c) => c.toJson()).toList()));
     });
+    _saveToFirebase();
   }
 
   void _deleteTransferCategory(Category c) {
@@ -2027,12 +2098,18 @@ class _HomeScreenState extends State<HomeScreen> {
       widget.storageService.setString('transfer_categories',
           jsonEncode(transferCategories.map((c) => c.toJson()).toList()));
     });
+    _saveToFirebase();
   }
 
   void _addTransferSubCategory(SubCategory s) {
     setState(() {
       transferSubCategories.add(s);
     });
+    widget.storageService.setString(
+      'transfer_subcategories',
+      jsonEncode(transferSubCategories.map((e) => e.toJson()).toList()),
+    );
+    _saveToFirebase();
   }
 
   void _deleteTransferSubCategory(SubCategory s) {
@@ -2040,6 +2117,11 @@ class _HomeScreenState extends State<HomeScreen> {
       transferSubCategories
           .removeWhere((x) => x.name == s.name && x.parentName == s.parentName);
     });
+    widget.storageService.setString(
+      'transfer_subcategories',
+      jsonEncode(transferSubCategories.map((e) => e.toJson()).toList()),
+    );
+    _saveToFirebase();
   }
 
   void _addExpenseSubCategory(SubCategory s) {
@@ -2396,10 +2478,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // ⭐ СОХРАНЕНИЕ В FIREBASE
   Future<void> _saveToFirebase() async {
     try {
-      // ⏳ Ждём 500 мс, чтобы prefs.setString (savePayments) успел записать 
+      // ⏳ Ждём 500 мс, чтобы prefs.setString (savePayments) успел записать
       // данные на диск. Иначе Firebase получит СТАРЫЕ данные (где платёж pending).
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       print('📤 Сохраняем в Firebase...');
       await widget.backupService.saveToFirebase();
       print('✅ Успешно сохранено в Firebase!');
@@ -2440,6 +2522,7 @@ class _HomeScreenState extends State<HomeScreen> {
       widget.storageService.clearAll();
       widget.storageService.saveAccounts(accounts);
     });
+    _saveToFirebase();
   }
 
   void _showCalculator(TextEditingController controller) {
@@ -2452,34 +2535,44 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Калькулятор'),
+              title: const Text('Калькулятор'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: calcController,
-                    decoration: InputDecoration(
+                    autofocus: true,
+                    keyboardType: TextInputType.text,
+                    onChanged: (val) {
+                      setState(() {
+                        final s = _calculateSum(val);
+                        result = s == s.roundToDouble()
+                            ? s.toInt().toString()
+                            : s.toString();
+                      });
+                    },
+                    decoration: const InputDecoration(
                       hintText: 'Например: 100+50+25',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text('Результат: $result',
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Отмена')),
+                    child: const Text('Отмена')),
                 ElevatedButton(
                   onPressed: () {
                     final sum = _calculateSum(calcController.text);
                     controller.text = sum.toString();
                     Navigator.pop(context);
                   },
-                  child: Text('Вставить'),
+                  child: const Text('Вставить'),
                 ),
               ],
             );
@@ -2494,7 +2587,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final parts = input.split('+');
       double sum = 0;
       for (var part in parts) {
-        sum += double.tryParse(part.trim()) ?? 0;
+        sum += double.tryParse(part.trim().replaceAll(',', '.')) ?? 0;
       }
       return sum;
     } catch (e) {
@@ -2507,12 +2600,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   double _parseAmount(String text) {
-    print('📝 Парсим сумму: "$text"');
-    final result = text.replaceAll(',', '.');
-    print('📝 После замены: "$result"');
-    final parsed = double.tryParse(result) ?? 0;
-    print('📝 Результат: $parsed');
-    return parsed;
+    return _calculateSum(text);
   }
 
   Color _getColorFromHex(String hexColor) {

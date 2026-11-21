@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models.dart';
 import '../services/storage_service.dart';
 
@@ -22,7 +22,7 @@ class TransactionsScreen extends StatefulWidget {
   final VoidCallback onScanReceipt;
 
   const TransactionsScreen({
-    Key? key,
+    super.key,
     required this.transactions,
     required this.accounts,
     required this.expenseCategories,
@@ -40,7 +40,7 @@ class TransactionsScreen extends StatefulWidget {
     required this.onAddExpense,
     required this.onAddTransfer,
     required this.onScanReceipt,
-  }) : super(key: key);
+  });
 
   @override
   _TransactionsScreenState createState() => _TransactionsScreenState();
@@ -102,13 +102,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (_filterDateStart != null) {
       list = list
           .where((t) =>
-              t.date.isAfter(_filterDateStart!.subtract(Duration(days: 1))))
+              t.date.isAfter(_filterDateStart!.subtract(const Duration(days: 1))))
           .toList();
     }
 
     if (_filterDateEnd != null) {
       list = list
-          .where((t) => t.date.isBefore(_filterDateEnd!.add(Duration(days: 1))))
+          .where((t) => t.date.isBefore(_filterDateEnd!.add(const Duration(days: 1))))
           .toList();
     }
 
@@ -124,7 +124,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         _buildFilterBar(),
         Expanded(
           child: _filteredTransactions.isEmpty
-              ? Center(
+              ? const Center(
                   child: Text('Нет операций'),
                 )
               : ListView.builder(
@@ -141,22 +141,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   // ⭐ ДОБАВЛЕНО: карточки с суммами
   Widget _buildSummaryCards() {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
       child: Row(
         children: [
           Expanded(
             child: Card(
               color: Colors.green.shade50,
               child: Padding(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
-                    Text('Доходы',
+                    const Text('Доходы',
                         style: TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold)),
                     Text(
                       '+${_totalIncome.toStringAsFixed(2)} ${widget.currency}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.green,
                           fontWeight: FontWeight.bold,
                           fontSize: 16),
@@ -170,15 +170,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             child: Card(
               color: Colors.red.shade50,
               child: Padding(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
-                    Text('Расходы',
+                    const Text('Расходы',
                         style: TextStyle(
                             color: Colors.red, fontWeight: FontWeight.bold)),
                     Text(
                       '-${_totalExpense.toStringAsFixed(2)} ${widget.currency}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
                           fontSize: 16),
@@ -193,15 +193,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               child: Card(
                 color: Colors.blue.shade50,
                 child: Padding(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     children: [
-                      Text('Переводы',
+                      const Text('Переводы',
                           style: TextStyle(
                               color: Colors.blue, fontWeight: FontWeight.bold)),
                       Text(
                         '${_totalTransfer.toStringAsFixed(2)} ${widget.currency}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.blue,
                             fontWeight: FontWeight.bold,
                             fontSize: 16),
@@ -218,23 +218,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   Widget _buildFilterBar() {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
       child: Column(
         children: [
           Row(
             children: [
               Expanded(
                 child: DropdownButtonFormField(
-                  value: _filterType,
+                  initialValue: _filterType,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF2A2A2A)
                         : Colors.white,
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                  items: [
+                  items: const [
                     DropdownMenuItem(value: 'all', child: Text('Все')),
                     DropdownMenuItem(value: 'income', child: Text('Доходы')),
                     DropdownMenuItem(value: 'expense', child: Text('Расходы')),
@@ -248,20 +248,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   },
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField(
-                  value: _filterCategory,
+                  initialValue: _filterCategory,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF2A2A2A)
                         : Colors.white,
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                   items: [
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                         value: 'all', child: Text('Все категории')),
                     ...widget.expenseCategories.map((c) =>
                         DropdownMenuItem(value: c.name, child: Text(c.name))),
@@ -277,23 +277,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           // ⭐ ДОБАВЛЕНО: фильтр по счетам
           Row(
             children: [
               Expanded(
                 child: DropdownButtonFormField(
-                  value: _filterAccount,
+                  initialValue: _filterAccount,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF2A2A2A)
                         : Colors.white,
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                   items: [
-                    DropdownMenuItem(value: 'all', child: Text('Все счета')),
+                    const DropdownMenuItem(value: 'all', child: Text('Все счета')),
                     ...widget.accounts.map((a) =>
                         DropdownMenuItem(value: a.id, child: Text(a.name))),
                   ],
@@ -304,7 +304,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   },
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Row(
                   children: [
@@ -313,7 +313,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         onTap: () => _selectDateRange(),
                         child: Container(
                           padding:
-                              EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                              const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                           decoration: BoxDecoration(
                             color:
                                 Theme.of(context).brightness == Brightness.dark
@@ -324,15 +324,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.calendar_today, size: 16),
-                              SizedBox(width: 4),
+                              const Icon(Icons.calendar_today, size: 16),
+                              const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   _filterDateStart != null &&
                                           _filterDateEnd != null
                                       ? '${_filterDateStart!.day}.${_filterDateStart!.month} - ${_filterDateEnd!.day}.${_filterDateEnd!.month}'
                                       : 'Дата',
-                                  style: TextStyle(fontSize: 12),
+                                  style: const TextStyle(fontSize: 12),
                                 ),
                               ),
                             ],
@@ -342,7 +342,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     ),
                     if (_filterDateStart != null || _filterDateEnd != null)
                       IconButton(
-                        icon: Icon(Icons.close, size: 16),
+                        icon: const Icon(Icons.close, size: 16),
                         onPressed: () {
                           setState(() {
                             _filterDateStart = null;
@@ -355,7 +355,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           // ⭐ 4 кнопки быстрых действий
           Row(
             children: [
@@ -367,7 +367,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   onTap: _onScanReceipt,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: _buildActionButton(
                   icon: Icons.swap_horiz,
@@ -376,7 +376,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   onTap: _onAddTransfer,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: _buildActionButton(
                   icon: Icons.arrow_downward,
@@ -385,7 +385,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   onTap: _onAddIncome,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: _buildActionButton(
                   icon: Icons.arrow_upward,
@@ -412,18 +412,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: color.withOpacity(isDark ? 0.5 : 0.3),
+            color: color.withValues(alpha: isDark ? 0.5 : 0.3),
           ),
         ),
         child: Column(
           children: [
             Icon(icon, color: isDark ? Colors.white : color, size: 24),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(label,
                 style: TextStyle(
                     color: isDark ? Colors.white : color,
@@ -500,18 +500,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
           color: Colors.red,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(Icons.delete, color: Colors.white, size: 30),
+        child: const Icon(Icons.delete, color: Colors.white, size: 30),
       ),
       onDismissed: (direction) {
         _showDeleteDialog(transaction);
       },
       child: Card(
-        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: ListTile(
           leading: _buildTransactionLeading(transaction),
           title: Row(
@@ -519,7 +519,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               Expanded(
                 child: Text(
                   transaction.category,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
               Text(
@@ -537,16 +537,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               if (transaction.subCategory != null)
                 Text(
                   transaction.subCategory!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               if (transaction.note.isNotEmpty)
                 Text(
                   transaction.note,
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               Text(
                 '${transaction.date.day}.${transaction.date.month}.${transaction.date.year}',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
           ),
@@ -624,7 +624,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void _showActionDialog(Transaction transaction) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
@@ -632,32 +632,32 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
+              const Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Выберите действие',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-              Divider(height: 1),
+              const Divider(height: 1),
               ListTile(
-                leading: Icon(Icons.edit, color: Colors.blue),
-                title: Text('Редактировать'),
+                leading: const Icon(Icons.edit, color: Colors.blue),
+                title: const Text('Редактировать'),
                 onTap: () {
                   Navigator.pop(context);
                   _showEditDialog(transaction);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.copy, color: Colors.orange),
-                title: Text('Дублировать'),
-                subtitle: Text('Создать копию операции'),
+                leading: const Icon(Icons.copy, color: Colors.orange),
+                title: const Text('Дублировать'),
+                subtitle: const Text('Создать копию операции'),
                 onTap: () {
                   Navigator.pop(context);
                   _duplicateTransaction(transaction);
                 },
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
             ],
           ),
         );
@@ -681,23 +681,61 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     _showEditDialog(duplicated, isDuplicate: true);
   }
 
+  double _parseAmount(String input) {
+    final parts = input.split('+');
+    double sum = 0;
+    for (var part in parts) {
+      sum += double.tryParse(part.trim().replaceAll(',', '.')) ?? 0;
+    }
+    return sum;
+  }
+
   void _showEditDialog(Transaction transaction, {bool isDuplicate = false}) {
+    if (widget.accounts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Нет доступных счетов')),
+      );
+      return;
+    }
+
     final amountController =
         TextEditingController(text: transaction.amount.toString());
     final noteController = TextEditingController(text: transaction.note);
 
-    String selectedAccountId = transaction.accountId;
+    String selectedAccountId =
+        widget.accounts.any((a) => a.id == transaction.accountId)
+            ? transaction.accountId
+            : widget.accounts.first.id;
     String? selectedCategory = transaction.category;
     String? selectedSubCategory = transaction.subCategory;
     String? toAccountId = transaction.toAccountId;
     bool isIncome = transaction.isIncome;
     DateTime selectedDate = transaction.date;
 
+    final categoriesList =
+        isIncome ? widget.incomeCategories : widget.expenseCategories;
+    final categoryNames = categoriesList.map((c) => c.name).toSet().toList();
+    if (!categoryNames.contains(selectedCategory)) {
+      categoryNames.insert(0, selectedCategory);
+    }
+
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            final availableSubs = (isIncome
+                    ? widget.incomeSubCategories
+                    : widget.expenseSubCategories)
+                .where((s) => s.parentName == selectedCategory)
+                .map((s) => s.name)
+                .toSet()
+                .toList();
+            if (selectedSubCategory != null &&
+                !availableSubs.contains(selectedSubCategory)) {
+              selectedSubCategory = null;
+            }
+
             return AlertDialog(
               title: Text(isDuplicate
                   ? 'Дублировать операцию'
@@ -708,22 +746,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   children: [
                     TextField(
                       controller: amountController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                        labelText: 'Сумма',
+                        labelText: 'Сумма (можно 100+50)',
                         prefixText: '${widget.currency} ',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 12),
-                    DropdownButtonFormField(
-                      value: selectedCategory,
-                      decoration: InputDecoration(labelText: 'Категория'),
-                      items: (isIncome
-                              ? widget.incomeCategories
-                              : widget.expenseCategories)
-                          .map((c) => DropdownMenuItem(
-                              value: c.name, child: Text(c.name)))
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedCategory,
+                      decoration: const InputDecoration(labelText: 'Категория'),
+                      items: categoryNames
+                          .map((name) =>
+                              DropdownMenuItem(value: name, child: Text(name)))
                           .toList(),
                       onChanged: (value) {
                         setState(() {
@@ -732,31 +768,29 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         });
                       },
                     ),
-                    SizedBox(height: 12),
-                    if (selectedCategory != null) ...[
-                      SizedBox(height: 12),
+                    if (selectedCategory != null &&
+                        availableSubs.isNotEmpty) ...[
+                      const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: selectedSubCategory,
-                        decoration: InputDecoration(
+                        initialValue: selectedSubCategory,
+                        decoration: const InputDecoration(
                           labelText: 'Подкатегория',
                           border: OutlineInputBorder(),
                         ),
-                        items: (isIncome
-                                ? widget.incomeSubCategories
-                                : widget.expenseSubCategories)
-                            .where((s) => s.parentName == selectedCategory)
-                            .map((s) => DropdownMenuItem(
-                                  value: s.name,
-                                  child: Text(s.name),
+                        items: availableSubs
+                            .map((name) => DropdownMenuItem(
+                                  value: name,
+                                  child: Text(name),
                                 ))
                             .toList(),
                         onChanged: (value) =>
                             setState(() => selectedSubCategory = value),
                       ),
                     ],
-                    DropdownButtonFormField(
-                      value: selectedAccountId,
-                      decoration: InputDecoration(labelText: 'Счёт'),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedAccountId,
+                      decoration: const InputDecoration(labelText: 'Счёт'),
                       items: widget.accounts
                           .map((a) => DropdownMenuItem(
                               value: a.id, child: Text(a.name)))
@@ -764,11 +798,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       onChanged: (value) =>
                           setState(() => selectedAccountId = value!),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     ListTile(
                       title: Text(
                           'Дата: ${selectedDate.day}.${selectedDate.month}.${selectedDate.year}'),
-                      leading: Icon(Icons.calendar_today),
+                      leading: const Icon(Icons.calendar_today),
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -779,10 +813,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         if (date != null) setState(() => selectedDate = date);
                       },
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: noteController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Заметка',
                         border: OutlineInputBorder(),
                       ),
@@ -793,11 +827,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Отмена'),
+                  child: const Text('Отмена'),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final amount = double.tryParse(amountController.text) ?? 0;
+                    final amount = _parseAmount(amountController.text);
                     if (amount <= 0 || selectedCategory == null) return;
 
                     final updatedTransaction = transaction.copyWith(
@@ -834,13 +868,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Удалить операцию?'),
+          title: const Text('Удалить операцию?'),
           content: Text(
               '${transaction.category} - ${transaction.amount} ${widget.currency}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -848,7 +882,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: Text('Удалить', style: TextStyle(color: Colors.white)),
+              child: const Text('Удалить', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -866,7 +900,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           children: [
             _buildAccountIcon(transaction.accountId, size: 36),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Icon(
                 Icons.arrow_forward,
                 size: 14,
@@ -886,7 +920,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildAccountIcon(transaction.accountId, size: 36),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Icon(
             transaction.isIncome ? Icons.arrow_downward : Icons.arrow_upward,
             size: 16,

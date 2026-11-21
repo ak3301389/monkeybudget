@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';  // ⬅️ ДОБАВЬТЕ ЭТОТ ИМПОРТ
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -15,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _loadVersion();
-    _checkAuthAndPin();  // ⬅️ ИЗМЕНЕНО: теперь проверяет и авторизацию, и PIN
+    _checkAuthAndPin(); // ⬅️ ИЗМЕНЕНО: теперь проверяет и авторизацию, и PIN
   }
 
   Future<void> _loadVersion() async {
@@ -25,36 +26,20 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
-  // ⬅️ НОВЫЙ МЕТОД: проверяет авторизацию и PIN
-	  Future<void> _checkAuthAndPin() async {
-	  await Future.delayed(Duration(seconds: 2));
+  Future<void> _checkAuthAndPin() async {
+    await Future.delayed(const Duration(seconds: 2));
 
-	  // 1. Проверяем авторизацию в Firebase
-	  final user = FirebaseAuth.instance.currentUser;
-	  print('🔍 FirebaseAuth.currentUser: ${user?.email ?? "null"}');
-	  print('🔍 User UID: ${user?.uid ?? "null"}');
+    final prefs = await SharedPreferences.getInstance();
+    final pin = prefs.getString('pin_code');
 
-	  if (user == null) {
-		print('❌ Пользователь НЕ вошёл');
-		if (!mounted) return;
-		Navigator.pushReplacementNamed(context, '/home');
-		return;
-	  }
+    if (!mounted) return;
 
-	  print('✅ Пользователь вошёл: ${user.email}');
-	  
-	  // 2. Пользователь вошёл — проверяем PIN
-	  final prefs = await SharedPreferences.getInstance();
-	  final pin = prefs.getString('pin_code');
-
-	  if (!mounted) return;
-
-	  if (pin == null || pin.isEmpty) {
-		Navigator.pushReplacementNamed(context, '/home');
-	  } else {
-		_showPinDialog(pin);
-	  }
-	}
+    if (pin == null || pin.isEmpty) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      _showPinDialog(pin);
+    }
+  }
 
   void _showPinDialog(String correctPin) {
     final pinController = TextEditingController();
@@ -69,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
         });
 
         return AlertDialog(
-          title: Text('Введите PIN-код'),
+          title: const Text('Введите PIN-код'),
           content: TextField(
             controller: pinController,
             focusNode: focusNode,
@@ -77,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> {
             keyboardType: TextInputType.number,
             obscureText: true,
             maxLength: 4,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'PIN-код',
               border: OutlineInputBorder(),
             ),
@@ -90,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   pinController.clear();
                   focusNode.requestFocus();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Неверный PIN-код')),
+                    const SnackBar(content: Text('Неверный PIN-код')),
                   );
                 }
               }
@@ -109,16 +94,19 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.account_balance_wallet, size: 80, color: Colors.white),
-            SizedBox(height: 16),
-            Text(
+            const Icon(Icons.account_balance_wallet, size: 80, color: Colors.white),
+            const SizedBox(height: 16),
+            const Text(
               'Бухгалтерия',
-              style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 28,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Версия $_version',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: const TextStyle(fontSize: 14, color: Colors.white70),
             ),
           ],
         ),

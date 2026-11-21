@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,7 +11,7 @@ import 'splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: FirebaseOptions(
+    options: const FirebaseOptions(
       apiKey: "AIzaSyD2DmbakbCQNhrCVRL2yodJoOqlnmPV9Ls",
       appId: "1:259871148413:android:66431325894da2017de414",
       messagingSenderId: "259871148413",
@@ -38,10 +38,10 @@ class MyApp extends StatefulWidget {
   final BackupService backupService;
 
   const MyApp({
-    Key? key,
+    super.key,
     required this.storageService,
     required this.backupService,
-  }) : super(key: key);
+  });
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -99,11 +99,11 @@ class _MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
+      supportedLocales: const [
         Locale('ru', 'RU'),
       ],
-      locale: Locale('ru', 'RU'),
-      home: SplashScreen(),
+      locale: const Locale('ru', 'RU'),
+      home: const SplashScreen(),
       routes: {
         '/home': (context) => HomeScreen(
               storageService: widget.storageService,
