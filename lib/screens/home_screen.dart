@@ -255,36 +255,16 @@ class _HomeScreenState extends State<HomeScreen> {
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
 
-    final hasLocalData = transactions.isNotEmpty || payments.isNotEmpty;
     final hasUnsynced =
         widget.storageService.getString('has_unsynced_changes') == 'true';
 
-    if (!hasLocalData) {
-      final restored = await widget.backupService.restoreFromFirebase();
-      if (restored && mounted) {
-        _loadData();
-      }
-      if (mounted) _checkUpcomingPayments();
-      return;
-    }
-
     if (hasUnsynced) {
       await _saveToFirebase();
-      if (mounted) _checkUpcomingPayments();
-      return;
     }
 
-    final cloudUpdated = await widget.backupService.getCloudUpdatedAt();
-    final lastSyncStr = widget.storageService.getString('last_sync_at');
-    final lastSync =
-        lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
-
-    if (cloudUpdated != null &&
-        (lastSync == null || cloudUpdated.isAfter(lastSync))) {
-      final restored = await widget.backupService.restoreFromFirebase();
-      if (restored && mounted) {
-        _loadData();
-      }
+    final restored = await widget.backupService.restoreFromFirebase();
+    if (restored && mounted) {
+      _loadData();
     }
 
     if (mounted) {
