@@ -115,18 +115,7 @@ class BackupService {
   }
 
   Future<Map<String, dynamic>?> _getLatestCloudDoc() async {
-    Map<String, dynamic>? bestData;
-    DateTime? bestDate;
-
-    final savedCode = storageService.getString('sync_code');
-    if (savedCode != null && savedCode.isNotEmpty) {
-      final codeDoc =
-          await _firestore.collection('sync_codes').doc(savedCode).get();
-      if (codeDoc.exists && codeDoc.data() != null) {
-        bestData = codeDoc.data()!;
-        bestDate = DateTime.tryParse(bestData['updatedAt']?.toString() ?? '');
-      }
-    }
+    const serverOnly = GetOptions(source: Source.server);
 
     if (_userId != 'anonymous') {
       final userDoc = await _firestore
@@ -134,25 +123,29 @@ class BackupService {
           .doc(_userId)
           .collection('data')
           .doc('backup')
-          .get();
+          .get(serverOnly);
       if (userDoc.exists && userDoc.data() != null) {
         final userData = userDoc.data()!;
-        final userDate =
-            DateTime.tryParse(userData['updatedAt']?.toString() ?? '');
-        if (bestData == null ||
-            (userDate != null &&
-                (bestDate == null || userDate.isAfter(bestDate)))) {
-          bestData = userData;
-          bestDate = userDate;
+        if (userData['syncCode'] != null) {
+          storageService.setString(
+              'sync_code', userData['syncCode'].toString());
         }
+        return userData;
       }
     }
 
-    if (bestData != null && bestData['syncCode'] != null) {
-      storageService.setString('sync_code', bestData['syncCode'].toString());
+    final savedCode = storageService.getString('sync_code');
+    if (savedCode != null && savedCode.isNotEmpty) {
+      final codeDoc = await _firestore
+          .collection('sync_codes')
+          .doc(savedCode)
+          .get(serverOnly);
+      if (codeDoc.exists && codeDoc.data() != null) {
+        return codeDoc.data()!;
+      }
     }
 
-    return bestData;
+    return null;
   }
 
   Future<bool> restoreFromFirebase() async {

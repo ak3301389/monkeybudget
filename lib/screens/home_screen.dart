@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -252,7 +253,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _autoSync() async {
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await FirebaseAuth.instance
+          .authStateChanges()
+          .first
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
+
     if (!mounted) return;
 
     final hasUnsynced =
