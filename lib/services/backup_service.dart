@@ -52,7 +52,20 @@ class BackupService {
 
       String? syncCode = storageService.getString('sync_code');
       if (syncCode == null || syncCode.isEmpty) {
-        syncCode = _generateSyncCode();
+        if (_userId != 'anonymous') {
+          final userDoc = await _firestore
+              .collection('users')
+              .doc(_userId)
+              .collection('data')
+              .doc('backup')
+              .get();
+          if (userDoc.exists && userDoc.data()?['syncCode'] != null) {
+            syncCode = userDoc.data()!['syncCode'].toString();
+          }
+        }
+        if (syncCode == null || syncCode.isEmpty) {
+          syncCode = _generateSyncCode();
+        }
         storageService.setString('sync_code', syncCode);
       }
 
@@ -101,30 +114,54 @@ class BackupService {
     return '$part1-$part2-$part3';
   }
 
-  Future<bool> restoreFromFirebase() async {
-    try {
-      final savedCode = storageService.getString('sync_code');
-      if (savedCode != null && savedCode.isNotEmpty) {
-        final codeDoc =
-            await _firestore.collection('sync_codes').doc(savedCode).get();
-        if (codeDoc.exists) {
-          await _applyCloudData(codeDoc.data()!);
-          return true;
-        }
-      }
+  Future<Map<String, dynamic>?> _getLatestCloudDoc() async {
+    Map<String, dynamic>? bestData;
+    DateTime? bestDate;
 
-      final doc = await _firestore
+    final savedCode = storageService.getString('sync_code');
+    if (savedCode != null && savedCode.isNotEmpty) {
+      final codeDoc =
+          await _firestore.collection('sync_codes').doc(savedCode).get();
+      if (codeDoc.exists && codeDoc.data() != null) {
+        bestData = codeDoc.data()!;
+        bestDate = DateTime.tryParse(bestData['updatedAt']?.toString() ?? '');
+      }
+    }
+
+    if (_userId != 'anonymous') {
+      final userDoc = await _firestore
           .collection('users')
           .doc(_userId)
           .collection('data')
           .doc('backup')
           .get();
+      if (userDoc.exists && userDoc.data() != null) {
+        final userData = userDoc.data()!;
+        final userDate =
+            DateTime.tryParse(userData['updatedAt']?.toString() ?? '');
+        if (bestData == null ||
+            (userDate != null &&
+                (bestDate == null || userDate.isAfter(bestDate)))) {
+          bestData = userData;
+          bestDate = userDate;
+        }
+      }
+    }
 
-      if (doc.exists) {
-        await _applyCloudData(doc.data()!);
+    if (bestData != null && bestData['syncCode'] != null) {
+      storageService.setString('sync_code', bestData['syncCode'].toString());
+    }
+
+    return bestData;
+  }
+
+  Future<bool> restoreFromFirebase() async {
+    try {
+      final data = await _getLatestCloudDoc();
+      if (data != null) {
+        await _applyCloudData(data);
         return true;
       }
-
       return false;
     } catch (e) {
       debugPrint('Firebase restore error: $e');
@@ -332,23 +369,9 @@ class BackupService {
 
   Future<DateTime?> getCloudUpdatedAt() async {
     try {
-      final savedCode = storageService.getString('sync_code');
-      if (savedCode != null && savedCode.isNotEmpty) {
-        final codeDoc =
-            await _firestore.collection('sync_codes').doc(savedCode).get();
-        if (codeDoc.exists && codeDoc.data()?['updatedAt'] != null) {
-          return DateTime.tryParse(codeDoc.data()!['updatedAt'].toString());
-        }
-      }
-
-      final doc = await _firestore
-          .collection('users')
-          .doc(_userId)
-          .collection('data')
-          .doc('backup')
-          .get();
-      if (doc.exists && doc.data()?['updatedAt'] != null) {
-        return DateTime.tryParse(doc.data()!['updatedAt'].toString());
+      final data = await _getLatestCloudDoc();
+      if (data != null && data['updatedAt'] != null) {
+        return DateTime.tryParse(data['updatedAt'].toString());
       }
       return null;
     } catch (_) {
