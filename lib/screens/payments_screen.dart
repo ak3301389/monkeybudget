@@ -394,6 +394,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     String selectedToAccountId = first.toAccountId;
     String selectedCategory = first.category;
     String? selectedSubCategory = first.subCategory;
+    final availableCategories =
+        first.isIncome ? widget.incomeCategories : widget.expenseCategories;
+    final categoryNames =
+        availableCategories.map((c) => c.name).toSet().toList();
+    if (!categoryNames.contains(selectedCategory)) {
+      categoryNames.insert(0, selectedCategory);
+    }
     String frequency = first.frequency;
     int interval = first.interval;
     int customInterval = first.interval;
@@ -460,6 +467,61 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     onChanged: (v) => setState(() => selectedToAccountId = v!),
                   ),
                 ],
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Категория',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: categoryNames
+                      .map((name) => DropdownMenuItem(
+                            value: name,
+                            child: Text(name),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    setState(() {
+                      selectedCategory = v!;
+                      selectedSubCategory = null;
+                    });
+                  },
+                ),
+                Builder(
+                  builder: (context) {
+                    final subNames = (first.isIncome
+                            ? widget.incomeSubCategories
+                            : widget.expenseSubCategories)
+                        .where((s) => s.parentName == selectedCategory)
+                        .map((s) => s.name)
+                        .toSet()
+                        .toList();
+                    if (subNames.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    final validSub = subNames.contains(selectedSubCategory)
+                        ? selectedSubCategory
+                        : null;
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: DropdownButtonFormField<String>(
+                        initialValue: validSub,
+                        decoration: const InputDecoration(
+                          labelText: 'Подкатегория',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: subNames
+                            .map((name) => DropdownMenuItem(
+                                  value: name,
+                                  child: Text(name),
+                                ))
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => selectedSubCategory = v),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: frequency,
@@ -1057,10 +1119,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     final amountController = TextEditingController();
 
     String fromAccountId =
-        widget.accounts.isNotEmpty ? widget.accounts[0].id : '';
-    String toAccountId =
-        widget.accounts.isNotEmpty ? widget.accounts[0].id : '';
+        widget.accounts.isNotEmpty ? widget.accounts.first.id : '';
+    String? toAccountId =
+        widget.accounts.isNotEmpty ? widget.accounts.first.id : null;
     bool isIncome = false;
+
     String? selectedCategory;
     String? selectedSubCategory;
 
@@ -1171,7 +1234,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ),
                 if (!isIncome) const SizedBox(height: 12),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
-                  DropdownButtonFormField(
+                  DropdownButtonFormField<String>(
                     initialValue: toAccountId,
                     decoration: InputDecoration(
                       labelText:
@@ -1364,11 +1427,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 String finalToAccountId;
 
                 if (isIncome) {
-                  finalFromAccountId = toAccountId;
-                  finalToAccountId = toAccountId;
+                  finalFromAccountId = toAccountId!;
+                  finalToAccountId = toAccountId!;
                 } else if (expenseType == 'transfer') {
                   finalFromAccountId = fromAccountId;
-                  finalToAccountId = toAccountId;
+                  finalToAccountId = toAccountId!;
                 } else {
                   finalFromAccountId = fromAccountId;
                   finalToAccountId = fromAccountId;
@@ -1667,7 +1730,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         TextEditingController(text: payment.amount.toString());
 
     String fromAccountId = payment.fromAccountId;
-    String toAccountId = payment.toAccountId;
+    String? toAccountId =
+        payment.toAccountId.isNotEmpty ? payment.toAccountId : null;
     bool isIncome = payment.isIncome;
     String? selectedCategory = payment.category;
     String? selectedSubCategory = payment.subCategory;
@@ -1737,10 +1801,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                         fromAccountId = widget.accounts.isNotEmpty
                             ? widget.accounts.first.id
                             : '';
-                        toAccountId = (expenseType == 'transfer' &&
-                                widget.accounts.length > 1)
-                            ? widget.accounts.elementAt(1).id
-                            : fromAccountId;
+                        toAccountId =
+                            expenseType == 'transfer' ? null : fromAccountId;
                       });
                     },
                   ),
@@ -1777,17 +1839,21 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ),
                 if (!isIncome) const SizedBox(height: 12),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
-                  DropdownButtonFormField(
+                  DropdownButtonFormField<String>(
                     initialValue: toAccountId,
                     decoration: InputDecoration(
                       labelText:
                           isIncome ? 'Счёт зачисления' : 'Счёт пополнения',
                     ),
                     items: widget.accounts
+                        .where((a) =>
+                            isIncome ||
+                            expenseType != 'transfer' ||
+                            a.id != fromAccountId)
                         .map((a) =>
                             DropdownMenuItem(value: a.id, child: Text(a.name)))
                         .toList(),
-                    onChanged: (value) => setState(() => toAccountId = value!),
+                    onChanged: (value) => setState(() => toAccountId = value),
                   ),
                 if (isIncome || (!isIncome && expenseType == 'transfer'))
                   const SizedBox(height: 12),
@@ -1872,6 +1938,13 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 if (name.isEmpty || amount <= 0 || selectedCategory == null) {
                   return;
                 }
+                if ((isIncome || expenseType == 'transfer') &&
+                    (toAccountId == null || toAccountId!.isEmpty)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Выберите счёт пополнения')),
+                  );
+                  return;
+                }
                 if (!isIncome &&
                     expenseType == 'transfer' &&
                     fromAccountId == toAccountId) {
@@ -1894,11 +1967,11 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 String finalToAccountId;
 
                 if (isIncome) {
-                  finalFromAccountId = toAccountId;
-                  finalToAccountId = toAccountId;
+                  finalFromAccountId = toAccountId!;
+                  finalToAccountId = toAccountId!;
                 } else if (expenseType == 'transfer') {
                   finalFromAccountId = fromAccountId;
-                  finalToAccountId = toAccountId;
+                  finalToAccountId = toAccountId!;
                 } else {
                   finalFromAccountId = fromAccountId;
                   finalToAccountId = fromAccountId;
