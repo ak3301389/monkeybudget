@@ -1193,11 +1193,10 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       setState(() {
                         expenseType = value.first;
                         fromAccountId = widget.accounts.isNotEmpty
-                            ? widget.accounts[0].id
+                            ? widget.accounts.first.id
                             : '';
-                        toAccountId = widget.accounts.isNotEmpty
-                            ? widget.accounts[0].id
-                            : '';
+                        toAccountId =
+                            expenseType == 'transfer' ? null : fromAccountId;
                       });
                     },
                   ),
