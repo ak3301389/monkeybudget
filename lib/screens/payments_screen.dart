@@ -128,12 +128,14 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.upload_file, color: Colors.teal, size: 28),
+                    icon: const Icon(Icons.upload_file,
+                        color: Colors.teal, size: 28),
                     tooltip: 'Импорт из файла',
                     onPressed: _importFromJson,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add_circle, color: Colors.teal, size: 30),
+                    icon: const Icon(Icons.add_circle,
+                        color: Colors.teal, size: 30),
                     onPressed: _showAddDialog,
                   ),
                 ],
@@ -320,7 +322,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   const SizedBox(width: 8),
                   if (!isPaid)
                     IconButton(
-                      icon: const Icon(Icons.payment, size: 20, color: Colors.green),
+                      icon: const Icon(Icons.payment,
+                          size: 20, color: Colors.green),
                       tooltip: 'Оплатить',
                       onPressed: () => widget.onPayNow(p),
                     ),
@@ -798,8 +801,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                     color: isOverdue
                         ? Colors.red
                         : (isSoon ? Colors.orange : Colors.blue),
-                    fontWeight:
-                        isOverdue ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 if (isOverdue) ...[
@@ -836,7 +838,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 child: Text(payment.isIncome ? 'Зачислить' : 'Списать'),
               )
@@ -1006,7 +1009,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(payment.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(payment.name,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               'Сумма: ${payment.amount.toStringAsFixed(2)} ${widget.currency}',
@@ -1156,7 +1160,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 if (!isIncome)
                   DropdownButtonFormField(
                     initialValue: fromAccountId,
-                    decoration: const InputDecoration(labelText: 'Счёт списания'),
+                    decoration:
+                        const InputDecoration(labelText: 'Счёт списания'),
                     items: widget.accounts
                         .map((a) =>
                             DropdownMenuItem(value: a.id, child: Text(a.name)))
@@ -1324,6 +1329,15 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 final name = nameController.text.trim();
                 final amount = _parseAmount(amountController.text);
                 if (name.isEmpty || amount <= 0 || selectedCategory == null) {
+                  return;
+                }
+                if (!isIncome &&
+                    expenseType == 'transfer' &&
+                    fromAccountId == toAccountId) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Выберите разные счета для перевода')),
+                  );
                   return;
                 }
 
@@ -1501,8 +1515,18 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       ButtonSegment(value: 'income', label: Text('Доход')),
                     ],
                     selected: {expenseType},
-                    onSelectionChanged: (v) =>
-                        setState(() => expenseType = v.first),
+                    onSelectionChanged: (v) {
+                      setState(() {
+                        expenseType = v.first;
+                        if (expenseType == 'transfer' &&
+                            selectedToAccountId == selectedFromAccountId &&
+                            widget.accounts.length > 1) {
+                          selectedToAccountId = widget.accounts
+                              .firstWhere((a) => a.id != selectedFromAccountId)
+                              .id;
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -1542,6 +1566,14 @@ class _PaymentsScreenState extends State<PaymentsScreen>
 
       final name = nameController.text.trim();
       if (name.isEmpty || selectedFromAccountId.isEmpty) return;
+      if (expenseType == 'transfer' &&
+          selectedFromAccountId == selectedToAccountId) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Выберите разные счета для перевода')),
+        );
+        return;
+      }
 
       // 4. Проверка: есть ли уже серия с таким названием + счёт
       final existingSeries = <Payment>[];
@@ -1703,11 +1735,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       setState(() {
                         expenseType = value.first;
                         fromAccountId = widget.accounts.isNotEmpty
-                            ? widget.accounts[0].id
+                            ? widget.accounts.first.id
                             : '';
-                        toAccountId = widget.accounts.isNotEmpty
-                            ? widget.accounts[0].id
-                            : '';
+                        toAccountId = (expenseType == 'transfer' &&
+                                widget.accounts.length > 1)
+                            ? widget.accounts.elementAt(1).id
+                            : fromAccountId;
                       });
                     },
                   ),
@@ -1733,7 +1766,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 if (!isIncome)
                   DropdownButtonFormField(
                     initialValue: fromAccountId,
-                    decoration: const InputDecoration(labelText: 'Счёт списания'),
+                    decoration:
+                        const InputDecoration(labelText: 'Счёт списания'),
                     items: widget.accounts
                         .map((a) =>
                             DropdownMenuItem(value: a.id, child: Text(a.name)))
@@ -1836,6 +1870,15 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                 final name = nameController.text.trim();
                 final amount = _parseAmount(amountController.text);
                 if (name.isEmpty || amount <= 0 || selectedCategory == null) {
+                  return;
+                }
+                if (!isIncome &&
+                    expenseType == 'transfer' &&
+                    fromAccountId == toAccountId) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Выберите разные счета для перевода')),
+                  );
                   return;
                 }
 

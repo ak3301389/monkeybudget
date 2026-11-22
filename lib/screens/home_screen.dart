@@ -2160,18 +2160,89 @@ class _HomeScreenState extends State<HomeScreen> {
     _saveToFirebase();
   }
 
+  void _rollbackPaidPayment(Payment payment) {
+    if (payment.status != 'paid') return;
+
+    if (payment.isIncome) {
+      final toIndex = accounts.indexWhere((a) => a.id == payment.toAccountId);
+      if (toIndex != -1) {
+        accounts[toIndex] = accounts[toIndex].copyWith(
+          balance: accounts[toIndex].balance - payment.amount,
+        );
+      }
+    } else {
+      final isTransfer = payment.toAccountId.isNotEmpty &&
+          payment.fromAccountId != payment.toAccountId;
+
+      if (isTransfer) {
+        final fromIndex =
+            accounts.indexWhere((a) => a.id == payment.fromAccountId);
+        if (fromIndex != -1) {
+          accounts[fromIndex] = accounts[fromIndex].copyWith(
+            balance: accounts[fromIndex].balance + payment.amount,
+          );
+        }
+        final toIndex = accounts.indexWhere((a) => a.id == payment.toAccountId);
+        if (toIndex != -1) {
+          accounts[toIndex] = accounts[toIndex].copyWith(
+            balance: accounts[toIndex].balance - payment.amount,
+          );
+        }
+      } else {
+        final fromIndex =
+            accounts.indexWhere((a) => a.id == payment.fromAccountId);
+        if (fromIndex != -1) {
+          accounts[fromIndex] = accounts[fromIndex].copyWith(
+            balance: accounts[fromIndex].balance + payment.amount,
+          );
+        }
+      }
+    }
+
+    if (payment.paidAt != null) {
+      final paidDate = payment.paidAt!;
+      final targetAccountId =
+          payment.isIncome ? payment.toAccountId : payment.fromAccountId;
+      final index = transactions.indexWhere((t) {
+        final dateDiff = t.date.difference(paidDate).inMinutes.abs();
+        return t.amount == payment.amount &&
+            t.accountId == targetAccountId &&
+            t.note.startsWith(payment.name) &&
+            dateDiff <= 5;
+      });
+      if (index != -1) {
+        transactions.removeAt(index);
+      }
+    }
+  }
+
   void _deletePayment(Payment p) {
     setState(() {
+      if (p.status == 'paid') {
+        _rollbackPaidPayment(p);
+        widget.storageService.saveAccounts(accounts);
+        widget.storageService.saveTransactions(transactions);
+      }
       payments.removeWhere((x) => x.id == p.id);
       widget.storageService.savePayments(payments);
     });
     _saveToFirebase();
   }
 
-  // ДОБАВИТЬ ВОТ ЭТО:
   void _deletePayments(List<Payment> list) {
     final ids = list.map((p) => p.id).toSet();
     setState(() {
+      bool hadPaid = false;
+      for (final p in list) {
+        if (p.status == 'paid') {
+          _rollbackPaidPayment(p);
+          hadPaid = true;
+        }
+      }
+      if (hadPaid) {
+        widget.storageService.saveAccounts(accounts);
+        widget.storageService.saveTransactions(transactions);
+      }
       payments.removeWhere((x) => ids.contains(x.id));
       widget.storageService.savePayments(payments);
     });
@@ -2235,8 +2306,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // ⭐ РАСХОДЫ: проверяем, перевод это или услуга
-    final isTransfer = payment.fromAccountId != payment.toAccountId;
+    final isTransfer = payment.toAccountId.isNotEmpty &&
+        payment.fromAccountId != payment.toAccountId;
 
     if (isTransfer) {
       // ⭐ ПЕРЕВОД: списываем с одного, зачисляем на другой
@@ -2384,60 +2455,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (payment.status != 'paid') return;
 
     setState(() {
-      // 1. Откатываем балансы
-      if (payment.isIncome) {
-        // Доход: снимаем с toAccount
-        final toIndex = accounts.indexWhere((a) => a.id == payment.toAccountId);
-        if (toIndex != -1) {
-          accounts[toIndex] = accounts[toIndex].copyWith(
-            balance: accounts[toIndex].balance - payment.amount,
-          );
-        }
-      } else {
-        final isTransfer = payment.toAccountId.isNotEmpty &&
-            payment.fromAccountId != payment.toAccountId;
+      _rollbackPaidPayment(payment);
 
-        if (isTransfer) {
-          // Перевод: возвращаем на fromAccount, снимаем с toAccount
-          final fromIndex =
-              accounts.indexWhere((a) => a.id == payment.fromAccountId);
-          if (fromIndex != -1) {
-            accounts[fromIndex] = accounts[fromIndex].copyWith(
-              balance: accounts[fromIndex].balance + payment.amount,
-            );
-          }
-          final toIndex =
-              accounts.indexWhere((a) => a.id == payment.toAccountId);
-          if (toIndex != -1) {
-            accounts[toIndex] = accounts[toIndex].copyWith(
-              balance: accounts[toIndex].balance - payment.amount,
-            );
-          }
-        } else {
-          // Услуга: возвращаем на fromAccount
-          final fromIndex =
-              accounts.indexWhere((a) => a.id == payment.fromAccountId);
-          if (fromIndex != -1) {
-            accounts[fromIndex] = accounts[fromIndex].copyWith(
-              balance: accounts[fromIndex].balance + payment.amount,
-            );
-          }
-        }
-      }
-
-      // 2. Удаляем транзакцию, созданную при оплате
-      // Ищем по: сумма + accountId + дата (близкая к paidAt)
-      if (payment.paidAt != null) {
-        final paidDate = payment.paidAt!;
-        transactions.removeWhere((t) {
-          final dateDiff = t.date.difference(paidDate).inSeconds.abs();
-          return t.amount == payment.amount &&
-              t.accountId == payment.fromAccountId &&
-              dateDiff < 60; // в пределах минуты
-        });
-      }
-
-      // 3. Возвращаем платёж в pending
       final paymentIndex = payments.indexWhere((p) => p.id == payment.id);
       if (paymentIndex != -1) {
         payments[paymentIndex] = payment.copyWith(
@@ -2446,7 +2465,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
 
-      // 4. Сохраняем
       widget.storageService.savePayments(payments);
       widget.storageService.saveAccounts(accounts);
       widget.storageService.saveTransactions(transactions);
